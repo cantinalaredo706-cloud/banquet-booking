@@ -4,7 +4,7 @@
    Source: the 2026–2027 party contracts and Jim's answers. */
 
 /* ---------- Names shown to guests (change once the name is approved) ---------- */
-export const BRAND = 'Your Restaurant';
+export const BRAND = 'Cantina Laredo';
 export const LOCATION = 'Fort Myers';
 export const GM = 'Joe Valenza\nGeneral Manager';
 export const TZ = 'America/New_York';
