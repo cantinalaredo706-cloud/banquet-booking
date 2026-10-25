@@ -247,3 +247,11 @@ legend{font-size:.85rem;font-weight:600;margin-bottom:6px}
 .mail .res.no{background:var(--chile-soft);color:var(--chile)}
 .who{font-size:.8rem;color:var(--muted)}
 .banner{background:var(--gold-soft);color:var(--gold);border-radius:8px;padding:10px 14px;font-size:.88rem}
+/* Guest price tables: wrap instead of scrolling sideways */
+.prices{table-layout:auto}
+.prices td{padding:7px 6px}
+.prices td:first-child{white-space:normal;font-family:var(--f-body)}
+.prices td.mono,.prices td b{white-space:nowrap}
+.prices td.mono{text-align:right}
+.prices tr:first-child td{font-size:.8rem}
+.prices tr:first-child td:not(:first-child){text-align:right}

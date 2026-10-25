@@ -48,14 +48,14 @@ function stepBrowse() {
   let body = '';
   if (t === 'spaces') body = `<div class="grid">
     <article class="card offer"><h3>Private Dining Room</h3><p class="muted">${SPACES.pdr.desc}</p>
-      <div class="tablewrap"><table class="up"><tbody><tr><td></td><td><b>Minimum</b></td><td><b>Cancel fee</b></td></tr>
+      <div class="tablewrap"><table class="up prices"><tbody><tr><td></td><td><b>Minimum</b></td><td><b>Cancel fee</b></td></tr>
       <tr><td>Lunch Sun–Thu</td><td class="mono">$550</td><td class="mono">$275</td></tr><tr><td>Dinner Sun–Thu</td><td class="mono">$1,100</td><td class="mono">$550</td></tr>
       <tr><td>Lunch Fri, Sat, holidays</td><td class="mono">$650</td><td class="mono">$325</td></tr><tr><td>Dinner Fri, Sat, holidays</td><td class="mono">$1,300</td><td class="mono">$650</td></tr></tbody></table></div>
       <p class="small muted">Minimums are before tax and gratuity. Lunch 11 am–3 pm. Dinner starts 3–8 pm and runs until close. Cancel fee applies within 72 hours.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="pdr">Check Private Dining Room dates</button></article>
     <article class="card offer"><h3>Dining Room</h3><p class="muted">${SPACES.dr.desc}</p>
       <dl class="facts"><dt>Party size</dt><dd>11 to 100 guests</dd><dt>Arrival</dt><dd>11 am to 30 min before close</dd><dt>Rental fee</dt><dd>None</dd></dl>
-      <div class="tablewrap"><table class="up"><tbody><tr><td><b>Party size</b></td><td><b>Cancel fee</b></td></tr><tr><td>9–15</td><td class="mono">$200</td></tr><tr><td>16–25</td><td class="mono">$250</td></tr><tr><td>Over 25</td><td class="mono">$300</td></tr></tbody></table></div>
+      <div class="tablewrap"><table class="up prices"><tbody><tr><td><b>Party size</b></td><td><b>Cancel fee</b></td></tr><tr><td>9–15</td><td class="mono">$200</td></tr><tr><td>16–25</td><td class="mono">$250</td></tr><tr><td>Over 25</td><td class="mono">$300</td></tr></tbody></table></div>
       <p class="small muted">Fee applies within 12 hours of the event, or if the party hasn't arrived 30 minutes after its time.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="dr">Check Dining Room dates</button></article>
     <article class="card offer"><h3>Bar <span class="pending">Agreement pending</span></h3><p class="muted">${SPACES.bar.desc}</p>
