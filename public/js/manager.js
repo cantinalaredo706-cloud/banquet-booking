@@ -3,7 +3,7 @@ import * as R from './rules.js';
 const { SPACES, esc, money, fmtShort, fmtT } = R;
 
 document.getElementById('brand-line').textContent = `Manager view · ${R.BRAND} · ${R.LOCATION}`;
-let D = null, open = null, busy = false, err = null, addOpen = false;
+let D = null, open = null, busy = false, err = null, addOpen = false, editId = null;
 const freshAdd = () => ({ space: 'dr', date: '', block: 'dinner', time: '', ext: false, name: '', phone: '', email: '', guests: '', type: 'Birthday', food: '', org: '', notes: '', emailGuest: false });
 let F = freshAdd();
 
@@ -34,7 +34,8 @@ function addForm() {
   const inp = (k, type = 'text', x = '') => `<input type="${type}" data-add="${k}" value="${esc(F[k])}" ${x}>`;
   const times = timeOptions();
   const foods = [['', 'Not decided yet'], ['menu', 'Order from the menu'], ...R.LUNCH_SET.map(p => [`set-l-${p}`, `Lunch set menu · $${p}`]), ...R.DINNER_SET.map(p => [`set-d-${p}`, `Dinner set menu · $${p}`]), ...R.BUFFETS.map(b => [b.id, b.name])];
-  return `<div class="card" style="display:flex;flex-direction:column;gap:14px"><h3>Add a booking</h3><div id="add-errors"></div>
+  const editing = editId != null;
+  return `<div class="card" id="add-card" style="display:flex;flex-direction:column;gap:14px${editing ? ';border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)' : ''}"><h3>${editing ? 'Edit booking' : 'Add a booking'}</h3>${editing ? '<p class="small muted" style="margin-top:-8px">Changes save right away. The booking keeps its status (on hold or confirmed).</p>' : ''}<div id="add-errors"></div>
     <div class="form">
       <label class="f">Space${sel('space', Object.values(SPACES).map(x => [x.id, x.name]))}</label>
       <label class="f">Date${inp('date', 'date', `min="${R.todayLocal()}"`)}</label>
@@ -44,14 +45,14 @@ function addForm() {
       <label class="f">Reservation name${inp('name', 'text', 'maxlength="120"')}</label>
       <label class="f">Guests${inp('guests', 'number', `min="1" ${SPACES[F.space].maxG ? `max="${SPACES[F.space].maxG}"` : ''} inputmode="numeric"`)}</label>
       <label class="f">Phone${inp('phone', 'tel', 'maxlength="40"')}</label>
-      <label class="f">Email <span class="hint">Optional</span>${inp('email', 'email', 'maxlength="160"')}</label>
+      <label class="f">Email${inp('email', 'email', 'maxlength="160"')}</label>
       <label class="f">Type of event${sel('type', R.EVENT_TYPES.map(t => [t, t]))}</label>
       <label class="f">Food${sel('food', foods)}</label>
       <label class="f full">Company or organization <span class="hint">Optional</span>${inp('org', 'text', 'maxlength="160"')}</label>
       <label class="f full">Notes <span class="hint">Optional</span><textarea data-add="notes" maxlength="2000">${esc(F.notes)}</textarea></label>
-      <label class="check full"><input type="checkbox" data-add="emailGuest" ${F.emailGuest ? 'checked' : ''}><span>Email the guest a confirmation (needs their email)</span></label>
+      <label class="check full"><input type="checkbox" data-add="emailGuest" ${F.emailGuest ? 'checked' : ''}><span>${editing ? 'Email the guest the updated details' : 'Email the guest a confirmation'}</span></label>
     </div>
-    <div class="actions"><button type="button" class="btn ghost small" data-action="addcancel">Cancel</button><button type="button" class="btn primary small" data-action="addsave" ${busy ? 'disabled' : ''}>Add booking</button></div></div>`;
+    <div class="actions"><button type="button" class="btn ghost small" data-action="addcancel">Cancel</button><button type="button" class="btn primary small" data-action="addsave" ${busy ? 'disabled' : ''}>${editing ? 'Save changes' : 'Add booking'}</button></div></div>`;
 }
 const when = b => b.space === 'pdr' ? (b.block === 'lunch' ? `Lunch${b.time != null ? ' ' + fmtT(b.time) : ''}${b.ext ? ' (room until 4)' : ''}` : 'Dinner ' + fmtT(b.time)) : fmtT(b.time);
 function card(b) {
@@ -59,7 +60,7 @@ function card(b) {
   return `<div class="req"><div class="row"><b>${esc(b.name)}</b><span class="pill held">On hold</span></div><span class="why">${esc(b.why)}</span>
     <dl class="kv"><dt>When</dt><dd>${esc(R.whenText(b))}</dd><dt>Guests</dt><dd>${b.guests} · ${esc(b.type)}</dd>${b.org ? `<dt>Company</dt><dd>${esc(b.org)}</dd>` : ''}<dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}${b.brunchAdd ? ' + coffee/tea/OJ' : ''}</dd>${(+b.platS || +b.platL) ? `<dt>Platters</dt><dd>${+b.platS || 0} small, ${+b.platL || 0} large</dd>` : ''}<dt>Bar</dt><dd>${esc(R.barText(b))}</dd><dt>Checks</dt><dd>${esc(b.checks)}</dd>${b.tv ? '<dt>TV</dt><dd>Yes ($75)</dd>' : ''}${e.priced ? `<dt>Estimate</dt><dd class="mono">${money(e.total)}</dd>` : ''}<dt>Card</dt><dd>${b.card ? `${esc(b.card.brand)} •••• ${esc(b.card.last4)}` : 'Not on file yet — call the guest'}</dd><dt>Contact</dt><dd><a href="mailto:${esc(b.email)}">${esc(b.email)}</a><br><a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></dd><dt>Submitted</dt><dd>${esc(R.fmtStamp(b.createdAt))}</dd></dl>
     ${b.notes ? `<p class="small muted">“${esc(b.notes)}”</p>` : ''}
-    <div class="actions" style="justify-content:flex-end"><button type="button" class="btn danger small" data-action="decline" data-id="${b.id}" ${busy ? 'disabled' : ''}>Decline</button><button type="button" class="btn primary small" data-action="approve" data-id="${b.id}" ${busy ? 'disabled' : ''}>Approve</button></div></div>`;
+    <div class="actions" style="justify-content:flex-end"><button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button><button type="button" class="btn danger small" data-action="decline" data-id="${b.id}" ${busy ? 'disabled' : ''}>Decline</button><button type="button" class="btn primary small" data-action="approve" data-id="${b.id}" ${busy ? 'disabled' : ''}>Approve</button></div></div>`;
 }
 function render() {
   const app = document.getElementById('app');
@@ -76,7 +77,7 @@ function render() {
     ${addForm()}
     <div class="panel-head"><span class="eyebrow">Manager view</span><h2>Needs your approval</h2><p class="muted">Held bookings keep the space until you decide. Approving or declining emails the guest.</p></div>
     ${D.held.length ? D.held.map(card).join('') : `<p class="empty">Nothing waiting. Private Dining Room and Bar bookings, lunch extensions, and the 3rd+ Dining Room party of a day show up here.</p>`}
-    <div class="card"><h3 style="margin-bottom:8px">Upcoming parties</h3>${D.upcoming.length ? `<div class="tablewrap"><table class="up"><tbody>${D.upcoming.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}<br><span class="muted small">${when(b)}</span></td><td>${esc(b.name)}<br><span class="muted small">${b.guests} guests · <a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></span></td><td><span class="pill ${b.status}">${b.status === 'held' ? 'On hold' : 'Confirmed'}</span>${b.manual ? '<br><span class="muted small">Added by hand</span>' : ''}</td><td>${b.status === 'confirmed' ? `<button type="button" class="btn danger small" data-action="cancelbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Cancel</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No upcoming parties yet.</p>'}</div>
+    <div class="card"><h3 style="margin-bottom:8px">Upcoming parties</h3>${D.upcoming.length ? `<div class="tablewrap"><table class="up"><tbody>${D.upcoming.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}<br><span class="muted small">${when(b)}</span></td><td>${esc(b.name)}<br><span class="muted small">${b.guests} guests · <a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></span></td><td><span class="pill ${b.status}">${b.status === 'held' ? 'On hold' : 'Confirmed'}</span>${b.manual ? '<br><span class="muted small">Added by hand</span>' : ''}</td><td><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap"><button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button>${b.status === 'confirmed' ? `<button type="button" class="btn danger small" data-action="cancelbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Cancel</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No upcoming parties yet.</p>'}</div>
     ${D.declined.length ? `<div class="card"><h3 style="margin-bottom:8px">Recently declined or cancelled</h3><div class="tablewrap"><table class="up"><tbody>${D.declined.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}</td><td>${esc(b.name)}</td><td class="small muted">${b.cancelled ? 'Cancelled' : 'Declined'}${b.decidedBy ? ' by ' + esc(b.decidedBy) : ''}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
   </div><div class="col">
     <div class="panel-head"><span class="eyebrow">Email notifications</span><h2>Emails</h2><p class="muted">Every email the site sent or tried to send, newest first. Click one to read it.</p></div>
@@ -101,14 +102,20 @@ document.addEventListener('click', async e => {
     catch (x) { toast(x.message) }
     busy = false; return load();
   }
-  if (a === 'addopen') { addOpen = true; render(); return }
-  if (a === 'addcancel') { addOpen = false; F = freshAdd(); render(); return }
+  if (a === 'addopen') { addOpen = true; editId = null; F = freshAdd(); render(); return }
+  if (a === 'addcancel') { addOpen = false; editId = null; F = freshAdd(); render(); return }
+  if (a === 'editbk') {
+    const b = [...D.held, ...D.upcoming].find(x => x.id === +t.dataset.id); if (!b) return;
+    F = { space: b.space, date: b.date, block: b.block || 'dinner', time: b.time == null ? '' : String(b.time), ext: !!b.ext, name: b.name, phone: b.phone || '', email: b.email || '', guests: String(b.guests), type: b.type || 'Other', food: b.food || '', org: b.org || '', notes: b.notes || '', emailGuest: false };
+    editId = b.id; addOpen = true; render();
+    document.getElementById('add-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
+  }
   if (a === 'addsave') {
     busy = true; render();
     try {
-      const r = await api('/api/manager/add', F);
-      toast(`Booking added for ${F.name}.${F.emailGuest ? ` Guest email: ${r.guestEmail}.` : ''}`);
-      addOpen = false; F = freshAdd();
+      const r = await api(editId != null ? '/api/manager/edit' : '/api/manager/add', editId != null ? { ...F, id: editId } : F);
+      toast(`${editId != null ? 'Changes saved' : 'Booking added'} for ${F.name}.${F.emailGuest ? ` Guest email: ${r.guestEmail}.` : ''}`);
+      addOpen = false; editId = null; F = freshAdd();
     } catch (x) {
       busy = false; render();
       const el = document.getElementById('add-errors'); if (el) { el.innerHTML = `<div class="errors" role="alert">${esc(x.message)}</div>`; el.scrollIntoView({ behavior: 'smooth', block: 'center' }) }

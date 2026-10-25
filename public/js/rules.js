@@ -44,7 +44,7 @@ export const BAROPTS = [
   { id: 'tickets', name: 'Drink tickets', desc: 'Each guest gets a set number of drink tickets. Anything beyond that goes on their own tab.' },
   { id: 'cash', name: 'Cash bar', desc: 'Guests pay for their own drinks.' }
 ];
-export const EVENT_TYPES = ['Birthday', 'Anniversary', 'Rehearsal dinner', 'Shower', 'Business meal', 'Holiday party', 'Graduation', 'Celebration of life', 'Other'];
+export const EVENT_TYPES = ['Birthday', 'Anniversary', 'Rehearsal dinner', 'Shower', 'Business meal', 'Holiday party', 'Graduation', 'Celebration of life', 'Medical/pharmaceutical', 'Other'];
 
 /* ---------- Dates (calendar days as 'YYYY-MM-DD', always Fort Myers time) ---------- */
 export const pad = n => String(n).padStart(2, '0');
