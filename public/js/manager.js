@@ -56,7 +56,7 @@ function render() {
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-action]'); if (!t || t.disabled) return; const a = t.dataset.action;
   if (a === 'reload') { err = null; document.getElementById('app').innerHTML = '<p class="loading">Loading bookings…</p>'; return load() }
-  if (a === 'signin') { location.reload(); return }
+  if (a === 'signin') { location.href = '/cdn-cgi/access/logout'; return } // clears an old or stale sign-in, then the manager page asks for a fresh one
   if (a === 'mail') { const id = +t.dataset.id; open = open === id ? null : id; render(); return }
   if (a === 'approve' || a === 'decline') {
     const b = D.held.find(x => x.id === +t.dataset.id);
