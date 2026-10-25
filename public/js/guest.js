@@ -58,8 +58,10 @@ function stepBrowse() {
       <div class="tablewrap"><table class="up prices"><tbody><tr><td><b>Party size</b></td><td><b>Cancel fee</b></td></tr><tr><td>9–15</td><td class="mono">$200</td></tr><tr><td>16–25</td><td class="mono">$250</td></tr><tr><td>Over 25</td><td class="mono">$300</td></tr></tbody></table></div>
       <p class="small muted">Fee applies within 12 hours of the event, or if the party hasn't arrived 30 minutes after its time.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="dr">Check Dining Room dates</button></article>
-    <article class="card offer"><h3>Bar <span class="pending">Agreement pending</span></h3><p class="muted">${SPACES.bar.desc}</p>
-      <dl class="facts"><dt>Party size</dt><dd>11 or more</dd><dt>Arrival</dt><dd>11 am to 30 min before close</dd><dt>Cancel</dt><dd>24 hours before</dd><dt>Final count</dt><dd>1 day before</dd></dl>
+    <article class="card offer"><h3>Bar</h3><p class="muted">${SPACES.bar.desc}</p>
+      <dl class="facts"><dt>Party size</dt><dd>11 to about 50 guests</dd><dt>Arrival</dt><dd>11 am to 30 min before close</dd><dt>Rental fee</dt><dd>None</dd></dl>
+      <div class="tablewrap"><table class="up prices"><tbody><tr><td><b>Party size</b></td><td><b>Cancel fee</b></td></tr><tr><td>9–15</td><td class="mono">$150</td></tr><tr><td>16–25</td><td class="mono">$200</td></tr><tr><td>Over 25</td><td class="mono">$250</td></tr></tbody></table></div>
+      <p class="small muted">Fee applies within 24 hours of the event, or if the party hasn't arrived 30 minutes after its time.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="bar">Check Bar dates</button></article></div>
     <p class="small muted">Parties of 10 or fewer in the Dining Room or Bar: please use our regular reservations. A 22% gratuity and 6.5% sales tax are added to every party's check.</p>`;
   if (t === 'set') body = `<div class="card setgrid"><p class="muted">Parties of 25 or more choose a set menu. <span class="pending">Menu details coming soon</span></p>
@@ -184,12 +186,14 @@ function contractHtml() {
     <li>Applicable sales tax and a 22% event gratuity will be added to your check(s).</li>
     <li>Use of confetti or confetti poppers is prohibited. A $100 cleaning fee will be charged if any are used.</li></ol>
     <p>Your signature indicates acceptance of the material contained herein and of the Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`;
-  return `<h4>Bar Party Agreement <span class="pending">Bar contract not yet provided</span></h4>${head}<h4>Policies known so far</h4><ol>
-    <li>The credit card provided will not be charged at booking. It secures your bar seating.</li>
-    <li>You may cancel up to 24 hours before your event without a fee. Cancellations within 24 hours are charged the cancellation fee.</li>
-    <li>A final guest count is required 1 day before your event.</li>
-    <li>In the event of a buffet or appetizer party, all food is paid on one check.</li></ol>
-    <p>Your signature indicates acceptance of the material contained herein and authorizes us to keep your card on file and charge it as described above.</p>`
+  return `<h4>Bar Party Agreement</h4>${head}<h4>Policies</h4><ol>
+    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking.</li>
+    <li>We will hold your table for 30 minutes past your reservation time. After that, it is considered a cancellation/no-show and the cancellation fee is charged.</li>
+    <li><b>Cancellation:</b> cancellations made less than 24 hours before the event are charged the cancellation fee for your party size: 9–15 guests $150, 16–25 guests $200, over 25 guests $250. Your fee: <b>${money0(R.barFee(g))}</b>.</li>
+    <li>A final guest count must be received no later than 2 days before the party.</li>${common}
+    <li>You may pre-select wines, beers and spirits, or we can run a cash bar.</li>
+    <li>Applicable sales tax and a 22% event gratuity will be added to your check(s).</li></ol>
+    <p>Your signature indicates acceptance of the material contained herein and of the Bar Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`
 }
 function stepContract() {
   return `<div class="panel-head"><span class="eyebrow">Step 4</span><h2>Review and sign</h2><p class="muted">Read the agreement, then type your full name to sign it.</p></div><div id="form-errors"></div>

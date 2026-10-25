@@ -17,11 +17,13 @@ export const SPACES = {
     desc: 'Our Dining Room seats up to 100. We arrange tables to make your group comfortable. Pick any arrival time.' },
   pdr: { id: 'pdr', name: 'Private Dining Room', short: 'Up to 40 guests · private', minG: 1, maxG: 40, cancelH: 72, countDays: 2,
     desc: 'A private room for up to 40 guests. No rental fee, just a food & beverage minimum. TV with HDMI available for $75.' },
-  bar: { id: 'bar', name: 'Bar', short: 'Bar seating for groups', minG: 11, maxG: null, cancelH: 24, countDays: 1,
-    desc: 'Bar seating for groups of 11 or more.' }
+  bar: { id: 'bar', name: 'Bar', short: 'Up to about 50 guests · bar area', minG: 11, maxG: 50, cancelH: 24, countDays: 2,
+    desc: 'Our Bar Area seats about 50 guests. We arrange tables to make your group comfortable. Pick any arrival time.' }
 };
 const DR_FEES = [[8, 150], [15, 200], [25, 250], [Infinity, 300]];
 export const drFee = g => DR_FEES.find(([max]) => g <= max)[1];
+const BAR_FEES = [[8, 100], [15, 150], [25, 200], [Infinity, 250]]; // from the 2026–2027 Bar contract
+export const barFee = g => BAR_FEES.find(([max]) => g <= max)[1];
 export const LUNCH_SET = [20, 22, 25];
 export const DINNER_SET = []; for (let p = 30; p <= 90; p += 5) DINNER_SET.push(p);
 export const BUFFETS = [
@@ -182,7 +184,7 @@ export function estimate(o) {
 export function cancelText(o) {
   if (o.space === 'pdr') { if (!o.block) return 'Depends on lunch or dinner'; const pt = pdrTerms(o.date, o.block); return `${money0(pt.fee)} if cancelled less than 72 hours before` }
   if (o.space === 'dr') { const g = parseInt(o.guests, 10) || 0; return g ? `${money0(drFee(g))} if cancelled within 12 hours, or 30 min no-show` : 'Based on party size' }
-  return 'Fee set by the Bar agreement (pending)';
+  const g = parseInt(o.guests, 10) || 0; return g ? `${money0(barFee(g))} if cancelled within 24 hours, or 30 min no-show` : 'Based on party size';
 }
 export function whenText(b) {
   if (b.space === 'pdr') return `Private Dining Room · ${fmtLong(b.date)} · ${b.block === 'lunch' ? `Lunch, 11:00 am–${b.ext ? '4:00 pm (extension requested)' : '3:00 pm'}` : `Dinner, ${fmtT(b.time)} until close (${fmtT(closeMin(b.date))})`}`;
@@ -276,7 +278,7 @@ export function guestEmail(b, stage) { /* stage: received | confirmed | declined
   } else {
     out = {
       s: stage === 'confirmed' ? `Confirmed: Bar seating on ${fmtShort(b.date)}` : `We received your Bar request for ${fmtShort(b.date)}`,
-      b: `Dear ${b.name},\n\nThank you for considering us for your upcoming event. We are committed to ensuring that your event is enjoyable, memorable, and stress-free.\n\n${stage === 'confirmed' ? `Your Bar seating for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)} is confirmed.` : `We received your Bar request for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)}.`}\n\nPlease note:\n\n• The credit card provided will not be charged at this time. It is simply to secure your bar seating.\n• You will have 24 hours before your event to cancel without incurring any fees. If you choose to cancel within 24 hours, a cancellation fee will be charged to your card.\n• A final guest count is required 1 day prior to your event date for preparation purposes.\n\nIf your event includes a buffet or appetizer-style service, please note that all food charges will be consolidated into a single bill.\n\nIf you have any questions or need further assistance, please don't hesitate to reach out. We're here to help make your event a success!\n\nBest regards,\n${GM}`
+      b: `Dear ${b.name},\n\nThank you for considering us for your upcoming event. We are committed to ensuring that your event is enjoyable, memorable, and stress-free.\n\n${stage === 'confirmed' ? `Your Bar seating for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)} is confirmed.` : `We received your Bar request for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)}.`}\n\nPlease note:\n\n• The credit card provided will not be charged at this time. It is simply to secure your bar seating.\n• You will have 24 hours before your event to cancel without incurring any fees. If you choose to cancel within 24 hours, a cancellation fee of ${money0(barFee(b.guests))} will be charged to your card.\n• We will hold your table for 30 minutes past your reservation time; after that, it is considered a no-show and the cancellation fee applies.\n• A final guest count is required 2 days prior to your event date for preparation purposes.\n\nIf your event includes a buffet or appetizer-style service, please note that all food charges will be consolidated into a single bill.\n\nIf you have any questions or need further assistance, please don't hesitate to reach out. We're here to help make your event a success!\n\nBest regards,\n${GM}`
     };
   }
   if (!b.card) out.b = out.b.replace('A credit card is on file to hold the reservation', 'A credit card is needed to hold the reservation').replace(/\n\nBest regards,/, `\n\nA manager will call you at ${b.phone} to put a credit card on file to hold your space.\n\nBest regards,`);
