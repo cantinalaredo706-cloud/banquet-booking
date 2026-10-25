@@ -281,6 +281,10 @@ export function guestEmail(b, stage) { /* stage: received | confirmed | declined
       b: `Dear ${b.name},\n\nThank you for considering us for your upcoming event. We are committed to ensuring that your event is enjoyable, memorable, and stress-free.\n\n${stage === 'confirmed' ? `Your Bar seating for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)} is confirmed.` : `We received your Bar request for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)}.`}\n\nPlease note:\n\n• The credit card provided will not be charged at this time. It is simply to secure your bar seating.\n• You will have 24 hours before your event to cancel without incurring any fees. If you choose to cancel within 24 hours, a cancellation fee of ${money0(barFee(b.guests))} will be charged to your card.\n• We will hold your table for 30 minutes past your reservation time; after that, it is considered a no-show and the cancellation fee applies.\n• A final guest count is required 2 days prior to your event date for preparation purposes.\n\nIf your event includes a buffet or appetizer-style service, please note that all food charges will be consolidated into a single bill.\n\nIf you have any questions or need further assistance, please don't hesitate to reach out. We're here to help make your event a success!\n\nBest regards,\n${GM}`
     };
   }
-  if (!b.card) out.b = out.b.replace('A credit card is on file to hold the reservation', 'A credit card is needed to hold the reservation').replace(/\n\nBest regards,/, `\n\nA manager will call you at ${b.phone} to put a credit card on file to hold your space.\n\nBest regards,`);
+  if (!b.card) {
+    out.b = out.b.replace('A credit card is on file to hold the reservation', 'A credit card is needed to hold the reservation');
+    // Bookings a manager added by hand were arranged on the phone, so no "we'll call you" line.
+    if (!b.manual && b.phone) out.b = out.b.replace(/\n\nBest regards,/, `\n\nA manager will call you at ${b.phone} to put a credit card on file to hold your space.\n\nBest regards,`);
+  }
   return out;
 }

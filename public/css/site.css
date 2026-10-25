@@ -255,3 +255,4 @@ legend{font-size:.85rem;font-weight:600;margin-bottom:6px}
 .prices td.mono{text-align:right}
 .prices tr:first-child td{font-size:.8rem}
 .prices tr:first-child td:not(:first-child){text-align:right}
+input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 11px;width:100%}
