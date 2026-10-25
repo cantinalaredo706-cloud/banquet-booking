@@ -11,7 +11,7 @@ export async function onRequestPost({ request, env, data }) {
     const { space, date, block, time, ext, name, email, phone, guests } = m;
     const now = Date.now(), who = data.manager;
     const { name: _n, email: _e, phone: _p, guests: _g, ...base } = R.freshForm();
-    const rest = { ...base, ...m.details, card: null, manual: true, addedBy: who };
+    const rest = { ...base, ...m.details, card: null, manual: true, addedBy: who, enteredBy: m.manager };
     let id;
     try {
       const r = await DB.prepare(`INSERT INTO bookings (created_at, status, space, date, block, time, ext, name, email, phone, guests, why, data, decided_at, decided_by)
@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env, data }) {
     }
 
     const b = { ...rest, id, status: 'confirmed', space, date, block, time, ext, name, email, phone, guests };
-    await alertManagers(env, DB, 'confirmed', { s: `Added: ${name}, ${R.SPACES[space].name}, ${R.fmtShort(date)}`, b: `${who} added this booking in the manager view.\n\n${R.reqBody(b)}` }, id);
+    await alertManagers(env, DB, 'confirmed', { s: `Added: ${name}, ${R.SPACES[space].name}, ${R.fmtShort(date)}`, b: `${m.manager} (signed in as ${who}) added this booking in the manager view.\n\n${R.reqBody(b)}` }, id);
     let guestEmail = 'Not sent (not requested)';
     if (m.emailGuest) { const g = R.guestEmail(b, 'confirmed'); guestEmail = await sendMail(env, DB, { kind: 'guest', to: email, subject: g.s, body: g.b, bookingId: id }) }
     return json({ ok: true, id, guestEmail });

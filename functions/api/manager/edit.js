@@ -19,7 +19,7 @@ export async function onRequestPost({ request, env, data }) {
     const who = data.manager;
 
     const oldData = JSON.parse(row.data || '{}');
-    const newData = { ...oldData, ...m.details, tv: m.space === 'pdr' ? !!oldData.tv : false, editedBy: who, editedAt: Date.now() };
+    const newData = { ...oldData, ...m.details, tv: m.space === 'pdr' ? !!oldData.tv : false, editedBy: who, editedAt: Date.now(), lastChangedBy: m.manager };
     try {
       await DB.prepare(`UPDATE bookings SET space = ?, date = ?, block = ?, time = ?, ext = ?, name = ?, email = ?, phone = ?, guests = ?, data = ? WHERE id = ? AND status <> 'declined'`)
         .bind(m.space, m.date, m.block, m.time, m.ext ? 1 : 0, m.name, m.email, m.phone, m.guests, JSON.stringify(newData), id).run();
@@ -35,7 +35,7 @@ export async function onRequestPost({ request, env, data }) {
 
     await alertManagers(env, DB, 'confirmed', {
       s: `Changed: ${b.name}, ${R.SPACES[b.space].name}, ${R.fmtShort(b.date)}`,
-      b: `${who} changed this booking in the manager view.\n\n${changes.length ? 'What changed:\n' + changes.join('\n') : 'Nothing was changed.'}\n\n${R.reqBody(b)}`
+      b: `${m.manager} (signed in as ${who}) changed this booking in the manager view.${b.enteredBy ? `\nOriginally entered by: ${b.enteredBy}` : ''}\n\n${changes.length ? 'What changed:\n' + changes.join('\n') : 'Nothing was changed.'}\n\n${R.reqBody(b)}`
     }, id);
     let guestEmail = 'Not sent (not requested)';
     if (m.emailGuest) {
