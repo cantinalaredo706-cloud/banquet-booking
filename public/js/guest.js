@@ -96,7 +96,7 @@ function stepDate() {
       pick = `<div class="card"><h3>${fmtLong(ds)}</h3><p class="muted small" style="margin:4px 0 12px">${hol ? `${hol} — holiday minimums apply. ` : ''}Choose lunch or dinner.</p><div class="blocks">
         <div class="block ${l ? 'taken' : ''} ${S.sel.block === 'lunch' ? 'chosen' : ''}"><b>Lunch · 11:00 am–3:00 pm</b><span class="small">Minimum <span class="mono">${money0(lt.min)}</span> · cancel fee <span class="mono">${money0(lt.fee)}</span></span>
           ${l ? '<span class="small">Already booked</span>' : !lo ? '<span class="small">Less than 48 hours away — please call</span>' : `<label class="check small"><input type="checkbox" id="ext" ${S.sel.ext ? 'checked' : ''} ${xo ? '' : 'disabled'}><span>Request to stay until 4:00 pm${xo ? ' (manager approval)' : ' — not available, dinner party starts before 4'}</span></label>
-          <button type="button" class="btn ${S.sel.block === 'lunch' ? 'primary' : 'ghost'} small" data-action="block" data-b="lunch">${S.sel.block === 'lunch' ? '✓ Lunch selected' : 'Choose lunch'}</button>`}</div>
+          <span class="small">Start time</span><div class="times">${R.LUNCH_STARTS.map(m => `<button type="button" data-action="lstart" data-m="${m}" aria-pressed="${S.sel.block === 'lunch' && S.sel.time === m}">${fmtT(m)}</button>`).join('')}</div>`}</div>
         <div class="block ${dn ? 'taken' : ''} ${S.sel.block === 'dinner' ? 'chosen' : ''}"><b>Dinner · start 3–8 pm, until close (${fmtT(R.closeMin(ds))})</b><span class="small">Minimum <span class="mono">${money0(dt.min)}</span> · cancel fee <span class="mono">${money0(dt.fee)}</span></span>
           ${dn ? '<span class="small">Already booked</span>' : `<div class="times">${A.dinnerStarts(ds).map(x => `<button type="button" data-action="dstart" data-m="${x.m}" ${x.ok ? '' : 'disabled'} aria-pressed="${S.sel.block === 'dinner' && S.sel.time === x.m}">${fmtT(x.m)}</button>`).join('')}</div>`}</div></div></div>`;
     } else {
@@ -105,7 +105,7 @@ function stepDate() {
         <div class="times">${A.arrivalTimes(ds).map(x => `<button type="button" data-action="atime" data-m="${x.m}" ${x.ok ? '' : 'disabled'} aria-pressed="${S.sel.time === x.m}">${fmtT(x.m)}</button>`).join('')}</div></div>`
     }
   }
-  const ready = S.sel.date && (sp === 'pdr' ? (S.sel.block === 'lunch' || (S.sel.block === 'dinner' && S.sel.time != null)) : S.sel.time != null);
+  const ready = S.sel.date && (sp === 'pdr' ? ((S.sel.block === 'lunch' || S.sel.block === 'dinner') && S.sel.time != null) : S.sel.time != null);
   const monthName = new Date(Date.UTC(y, mo, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   return `<div class="panel-head"><span class="eyebrow">Step 2</span><h2>Date and time</h2><p class="muted">Choose a space, then a date. Bookings must be at least 48 hours away; for anything sooner, please call a manager.</p></div>${tabs}
    <div class="card"><div class="calhead"><button type="button" class="btn ghost small" data-action="mon" data-dir="-1" ${key <= minKey ? 'disabled' : ''} aria-label="Previous month">←</button><h3>${monthName}</h3><button type="button" class="btn ghost small" data-action="mon" data-dir="1" ${key >= maxKey ? 'disabled' : ''} aria-label="Next month">→</button></div>
@@ -227,7 +227,7 @@ function stepDone() {
 function summary() {
   const o = cur(), e = R.estimate(o), sp = SPACES[S.space];
   if (!S.sel.date) return `<div class="ticket"><div class="th"><span class="eyebrow" style="color:inherit;opacity:.8">Your party</span><h3>${sp.name}</h3></div><div class="tb"><p class="muted small">Choose a date and time. Your estimate shows up here.</p></div></div>`;
-  const timeTxt = S.space === 'pdr' ? (S.sel.block === 'lunch' ? `Lunch, 11–${S.sel.ext ? '4' : '3'}` : S.sel.time != null ? `Dinner from ${fmtT(S.sel.time)}` : '—') : (S.sel.time != null ? `Arrive ${fmtT(S.sel.time)}` : '—');
+  const timeTxt = S.space === 'pdr' ? (S.sel.block === 'lunch' ? (S.sel.time != null ? `Lunch from ${fmtT(S.sel.time)}` : 'Lunch') : S.sel.time != null ? `Dinner from ${fmtT(S.sel.time)}` : '—') : (S.sel.time != null ? `Arrive ${fmtT(S.sel.time)}` : '—');
   return `<div class="ticket"><div class="th"><span class="eyebrow" style="color:inherit;opacity:.8">${sp.name}</span><h3>${fmtShort(S.sel.date)}</h3></div><div class="tb">
     <dl class="kv"><dt>Time</dt><dd>${timeTxt}</dd><dt>Guests</dt><dd>${e.g || '—'}</dd><dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}</dd><dt>Bar</dt><dd>${esc(R.barText(o))}</dd>${e.pt ? `<dt>F&amp;B minimum</dt><dd class="mono">${money0(e.pt.min)}</dd>` : ''}<dt>Cancel fee</dt><dd>${esc(R.cancelText(o))}</dd></dl>
     ${e.priced ? `<div class="est"><span class="eyebrow">Estimate</span><dl class="kv" style="margin-top:6px">
@@ -256,7 +256,7 @@ document.addEventListener('click', e => {
   if (a === 'space') { if (S.space !== t.dataset.s) { S.space = t.dataset.s; clearSel(); resetProgress() } render(); return }
   if (a === 'mon') { const k = S.month.y * 12 + S.month.m + +t.dataset.dir; S.month = { y: Math.floor(k / 12), m: k % 12 }; render(); return }
   if (a === 'day') { if (S.sel.date !== t.dataset.d) { clearSel(); resetProgress(); S.sel.date = t.dataset.d } render(); return }
-  if (a === 'block') { S.sel.block = 'lunch'; S.sel.time = null; const x = document.getElementById('ext'); S.sel.ext = !!(x && x.checked); resetProgress(); render(); return }
+  if (a === 'lstart') { S.sel.block = 'lunch'; S.sel.time = +t.dataset.m; const x = document.getElementById('ext'); S.sel.ext = !!(x && x.checked); resetProgress(); render(); return }
   if (a === 'dstart') { S.sel.block = 'dinner'; S.sel.time = +t.dataset.m; S.sel.ext = false; resetProgress(); render(); return }
   if (a === 'atime') { S.sel.time = +t.dataset.m; resetProgress(); render(); return }
   if (a === 'next') return next();

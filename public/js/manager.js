@@ -22,7 +22,7 @@ let toastT;
 function toast(msg) { const t = document.getElementById('toast'); t.innerHTML = `<span>${esc(msg)}</span>`; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 6000) }
 
 function timeOptions() {
-  if (F.space === 'pdr' && F.block === 'lunch') return [];
+  if (F.space === 'pdr' && F.block === 'lunch') return R.LUNCH_STARTS;
   const out = [], start = F.space === 'pdr' ? 15 * 60 : 11 * 60;
   const end = F.space === 'pdr' ? 20 * 60 : (R.isDate(F.date) ? R.closeMin(F.date) : 22 * 60) - 30;
   for (let m = start; m <= end; m += 30) out.push(m);
@@ -39,7 +39,8 @@ function addForm() {
       <label class="f">Space${sel('space', Object.values(SPACES).map(x => [x.id, x.name]))}</label>
       <label class="f">Date${inp('date', 'date', `min="${R.todayLocal()}"`)}</label>
       ${F.space === 'pdr' ? `<label class="f">Lunch or dinner${sel('block', [['lunch', 'Lunch · 11 am–3 pm'], ['dinner', 'Dinner · until close']])}</label>` : ''}
-      ${times.length ? `<label class="f">${F.space === 'pdr' ? 'Dinner starts' : 'Arrival time'}${sel('time', [['', 'Choose a time'], ...times.map(m => [m, fmtT(m)])])}</label>` : `<label class="check" style="align-self:end"><input type="checkbox" data-add="ext" ${F.ext ? 'checked' : ''}><span>Stay until 4:00 pm</span></label>`}
+      <label class="f">${F.space === 'pdr' ? (F.block === 'lunch' ? 'Lunch starts' : 'Dinner starts') : 'Arrival time'}${sel('time', [['', 'Choose a time'], ...times.map(m => [m, fmtT(m)])])}</label>
+      ${F.space === 'pdr' && F.block === 'lunch' ? `<label class="check full"><input type="checkbox" data-add="ext" ${F.ext ? 'checked' : ''}><span>Keep the room until 4:00 pm</span></label>` : ''}
       <label class="f">Reservation name${inp('name', 'text', 'maxlength="120"')}</label>
       <label class="f">Guests${inp('guests', 'number', `min="1" ${SPACES[F.space].maxG ? `max="${SPACES[F.space].maxG}"` : ''} inputmode="numeric"`)}</label>
       <label class="f">Phone${inp('phone', 'tel', 'maxlength="40"')}</label>
@@ -52,7 +53,7 @@ function addForm() {
     </div>
     <div class="actions"><button type="button" class="btn ghost small" data-action="addcancel">Cancel</button><button type="button" class="btn primary small" data-action="addsave" ${busy ? 'disabled' : ''}>Add booking</button></div></div>`;
 }
-const when = b => b.space === 'pdr' ? (b.block === 'lunch' ? `Lunch${b.ext ? ' (until 4)' : ''}` : 'Dinner ' + fmtT(b.time)) : fmtT(b.time);
+const when = b => b.space === 'pdr' ? (b.block === 'lunch' ? `Lunch${b.time != null ? ' ' + fmtT(b.time) : ''}${b.ext ? ' (room until 4)' : ''}` : 'Dinner ' + fmtT(b.time)) : fmtT(b.time);
 function card(b) {
   const e = R.estimate(b);
   return `<div class="req"><div class="row"><b>${esc(b.name)}</b><span class="pill held">On hold</span></div><span class="why">${esc(b.why)}</span>

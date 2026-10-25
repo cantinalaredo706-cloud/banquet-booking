@@ -93,6 +93,8 @@ export function closedName(ds) {
 export const holidayName = ds => holidays(+ds.slice(0, 4))[ds] || null;
 export const closeMin = ds => { const w = dow(ds); return (w === 5 || w === 6) ? 22 * 60 : 21 * 60 };
 export const isWeekendRate = ds => { const w = dow(ds); return w === 5 || w === 6 || !!holidayName(ds) };
+/* Private Dining Room lunch: the room is held 11:00 am–3:00 pm; the party picks a start time within that. */
+export const LUNCH_STARTS = [660, 690, 720, 750, 780, 810, 840]; // 11:00 am – 2:00 pm
 export const pdrTerms = (ds, block) => { const hi = isWeekendRate(ds); return block === 'lunch' ? (hi ? { min: 650, fee: 325 } : { min: 550, fee: 275 }) : (hi ? { min: 1300, fee: 650 } : { min: 1100, fee: 550 }) };
 export const noticeOK = (ds, m, now = Date.now()) => localInstant(ds, m) - now >= NOTICE_H * 36e5;
 export const isSatSun = ds => { const w = dow(ds); return w === 0 || w === 6 };
@@ -144,6 +146,7 @@ export function makeAvail(slots, now = Date.now()) {
         if (pdrLunch(sel.date)) return taken;
         if (!noticeOK(sel.date, 11 * 60, now)) return 'Bookings must be at least 48 hours away. For anything sooner, please call a manager.';
         if (sel.ext && !extOK(sel.date)) return 'Staying until 4:00 pm is not available that day.';
+        if (!LUNCH_STARTS.includes(sel.time)) return 'Choose a lunch start time.';
         return null;
       }
       if (sel.block === 'dinner') {
@@ -187,7 +190,7 @@ export function cancelText(o) {
   const g = parseInt(o.guests, 10) || 0; return g ? `${money0(barFee(g))} if cancelled within 24 hours, or 30 min no-show` : 'Based on party size';
 }
 export function whenText(b) {
-  if (b.space === 'pdr') return `Private Dining Room · ${fmtLong(b.date)} · ${b.block === 'lunch' ? `Lunch, 11:00 am–${b.ext ? '4:00 pm (extension requested)' : '3:00 pm'}` : `Dinner, ${fmtT(b.time)} until close (${fmtT(closeMin(b.date))})`}`;
+  if (b.space === 'pdr') return `Private Dining Room · ${fmtLong(b.date)} · ${b.block === 'lunch' ? `Lunch${b.time != null ? ` starting ${fmtT(b.time)}` : ''} · room 11:00 am–${b.ext ? '4:00 pm (extension requested)' : '3:00 pm'}` : `Dinner, ${fmtT(b.time)} until close (${fmtT(closeMin(b.date))})`}`;
   return `${SPACES[b.space].name} · ${fmtLong(b.date)} · Arrival ${fmtT(b.time)}`;
 }
 export function barText(o) {
@@ -264,7 +267,7 @@ export function guestEmail(b, stage) { /* stage: received | confirmed | declined
   let out;
   if (b.space === 'pdr') {
     const pt = pdrTerms(b.date, b.block);
-    const time = b.block === 'lunch' ? `from 11:00 am until ${b.ext ? '4:00 pm (if approved)' : '3:00 pm'}` : `from ${fmtT(b.time)} until we close at ${fmtT(closeMin(b.date))}`;
+    const time = b.block === 'lunch' ? `from 11:00 am until ${b.ext ? '4:00 pm (if approved)' : '3:00 pm'}${b.time != null ? `, with your party starting at ${fmtT(b.time)}` : ''}` : `from ${fmtT(b.time)} until we close at ${fmtT(closeMin(b.date))}`;
     out = {
       s: stage === 'confirmed' ? `Confirmed: Private Dining Room on ${fmtShort(b.date)}` : `We received your Private Dining Room request for ${fmtShort(b.date)}`,
       b: `Hi ${first},\n\nThank you so much for thinking of us! ${stage === 'confirmed' ? `Your Private Dining Room booking for ${fmtLong(b.date)} is confirmed.` : `We received your Private Dining Room request for ${fmtLong(b.date)}. We'll confirm it shortly.`}\n\nThere are no fees other than the food and beverage minimum of ${money0(pt.min)}. This does not include the tax and gratuity. The credit card provided WILL NOT be charged at this time. It is to secure the room for you. You may cancel up to 72 hours before your event. If you cancel within 72 hours, the card will be charged the cancellation fee of ${money0(pt.fee)}. You will have the use of the room ${time}.\n\nYour final guest count is due 2 days before your event.\n\nPlease let me know what other questions you may have.\n\nBest regards,\n${GM}`

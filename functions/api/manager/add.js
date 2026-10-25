@@ -25,7 +25,8 @@ export async function onRequestPost({ request, env, data }) {
       block = ['lunch', 'dinner'].includes(body.block) ? body.block : null;
       if (!block) throw new HttpError(400, 'Choose lunch or dinner.');
       if (block === 'lunch') {
-        ext = !!body.ext;
+        ext = !!body.ext; time = parseInt(body.time, 10);
+        if (!R.LUNCH_STARTS.includes(time)) throw new HttpError(400, 'Choose a lunch start time between 11:00 am and 2:00 pm.');
         if (A.pdrLunch(date)) throw new HttpError(409, 'The Private Dining Room is already booked for lunch that day.');
         if (ext && !A.extOK(date)) throw new HttpError(409, 'A dinner party starts before 4:00 pm that day, so lunch can’t run until 4.');
       } else {
