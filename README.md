@@ -20,7 +20,7 @@ Guests book the Private Dining Room, Dining Room or Bar online. Managers approve
 | `ALERT_TO` | Starting address for manager alerts (changeable later in the manager view) |
 | `SITE_URL` | The site's address, used for the manager-view link in alert emails |
 | `ACCESS_TEAM_DOMAIN` | From Cloudflare Access, e.g. `yourteam.cloudflareaccess.com` |
-| `ACCESS_AUD` | The "Application Audience (AUD) Tag" from the Access application |
+| `ACCESS_AUD` | Optional: the Access application's "AUD tag", to tie sign-ins to that one application |
 
 Until email is set up, bookings still save and every email shows in the manager view as "Not sent".
 The card-on-file step (Stripe) is switched off; guests are told a manager will call to take a card.

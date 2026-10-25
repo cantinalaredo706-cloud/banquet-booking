@@ -1,5 +1,7 @@
 /* Locks every /api/manager/ request. Only people Cloudflare Access has signed in get through.
-   Until ACCESS_TEAM_DOMAIN and ACCESS_AUD are set (step 5 of the setup), everything here is refused. */
+   Until ACCESS_TEAM_DOMAIN is set (step 5 of the setup), everything here is refused.
+   Every sign-in must be signed by this restaurant's own Cloudflare Access team. If ACCESS_AUD is also set,
+   it must come from that exact Access application too. */
 import { json } from '../../../lib/server.js';
 
 const b64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
@@ -15,7 +17,7 @@ async function getKeys(team, force) {
 }
 
 async function verify(token, env) {
-  const team = 'https://' + String(env.ACCESS_TEAM_DOMAIN).replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const team = 'https://' + String(env.ACCESS_TEAM_DOMAIN).trim().replace(/^["']|["']$/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const [h, p, s] = token.split('.');
   if (!h || !p || !s) return null;
   const header = JSON.parse(b64uText(h)), payload = JSON.parse(b64uText(p));
@@ -28,7 +30,8 @@ async function verify(token, env) {
   if (!ok) return null;
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   const now = Math.floor(Date.now() / 1000);
-  if (!aud.includes(env.ACCESS_AUD) || payload.iss !== team || !(payload.exp > now) || (payload.nbf && payload.nbf > now + 60)) return null;
+  const wantAud = String(env.ACCESS_AUD || '').trim();
+  if ((wantAud && !aud.includes(wantAud)) || payload.iss !== team || !(payload.exp > now) || (payload.nbf && payload.nbf > now + 60)) return null;
   return payload.email || payload.common_name || 'manager';
 }
 
@@ -37,7 +40,7 @@ export async function onRequest(ctx) {
   // Local testing only: never set LOCAL_TEST_MANAGER on the live site; it also only works on localhost.
   const host = new URL(request.url).hostname;
   if (env.LOCAL_TEST_MANAGER === '1' && (host === 'localhost' || host === '127.0.0.1')) { ctx.data.manager = 'test@localhost'; return ctx.next() }
-  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return json({ error: 'The manager login is not set up yet. Finish the Cloudflare Access step first.', setup: true }, 403);
+  if (!String(env.ACCESS_TEAM_DOMAIN || '').trim()) return json({ error: 'The manager login is not set up yet. Finish the Cloudflare Access step first.', setup: true }, 403);
   const cookie = (request.headers.get('cookie') || '').match(/(?:^|;\s*)CF_Authorization=([^;]+)/);
   const token = request.headers.get('cf-access-jwt-assertion') || (cookie && cookie[1]);
   let who = null;
