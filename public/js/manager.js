@@ -30,7 +30,7 @@ function card(b) {
 function render() {
   const app = document.getElementById('app');
   if (err) {
-    app.innerHTML = `<div class="mgr"><div class="col"><div class="card"><h3>${err.status === 401 ? 'Please sign in again' : err.info?.setup ? 'Manager login not set up yet' : 'Could not load bookings'}</h3><p class="muted" style="margin-top:8px">${esc(err.message)}</p>
+    app.innerHTML = `<div class="mgr"><div class="col"><div class="card"><h3>${err.status === 401 ? 'Please sign in again' : err.info?.setup ? 'Manager login not set up yet' : 'Could not load bookings'}</h3><p class="muted" style="margin-top:8px">${esc(err.message)}</p>${err.info?.why ? `<p class="small" style="margin-top:8px"><b>Reason:</b> ${esc(err.info.why)}</p>` : ''}
       <div class="actions" style="margin-top:12px"><span></span><button type="button" class="btn primary small" data-action="${err.status === 401 ? 'signin' : 'reload'}">${err.status === 401 ? 'Sign in' : 'Try again'}</button></div></div></div></div>`;
     return;
   }

@@ -19,20 +19,22 @@ async function getKeys(team, force) {
 async function verify(token, env) {
   const team = 'https://' + String(env.ACCESS_TEAM_DOMAIN).trim().replace(/^["']|["']$/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const [h, p, s] = token.split('.');
-  if (!h || !p || !s) return null;
+  if (!h || !p || !s) return { why: 'The sign-in pass is not in the expected format.' };
   const header = JSON.parse(b64uText(h)), payload = JSON.parse(b64uText(p));
-  if (header.alg !== 'RS256') return null;
+  if (header.alg !== 'RS256') return { why: 'The sign-in pass uses an unexpected format.' };
   let jwk = (await getKeys(team)).find(k => k.kid === header.kid);
   if (!jwk) jwk = (await getKeys(team, true)).find(k => k.kid === header.kid);
-  if (!jwk) return null;
+  if (!jwk) return { why: `The sign-in pass was not issued by ${team.replace('https://', '')}. Check ACCESS_TEAM_DOMAIN.` };
   const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
   const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64u(s), new TextEncoder().encode(`${h}.${p}`));
-  if (!ok) return null;
+  if (!ok) return { why: 'The sign-in pass signature did not check out.' };
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   const now = Math.floor(Date.now() / 1000);
   const wantAud = String(env.ACCESS_AUD || '').trim();
-  if ((wantAud && !aud.includes(wantAud)) || payload.iss !== team || !(payload.exp > now) || (payload.nbf && payload.nbf > now + 60)) return null;
-  return payload.email || payload.common_name || 'manager';
+  if (payload.iss !== team) return { why: `The sign-in came from ${String(payload.iss).replace('https://', '')}, but ACCESS_TEAM_DOMAIN is set to ${team.replace('https://', '')}.` };
+  if (wantAud && !aud.includes(wantAud)) return { why: 'ACCESS_AUD does not match this Access application. Delete the ACCESS_AUD setting (it is optional) and redeploy.' };
+  if (!(payload.exp > now)) return { why: 'The sign-in has expired.' };
+  return { who: payload.email || payload.common_name || 'manager' };
 }
 
 export async function onRequest(ctx) {
@@ -43,9 +45,9 @@ export async function onRequest(ctx) {
   if (!String(env.ACCESS_TEAM_DOMAIN || '').trim()) return json({ error: 'The manager login is not set up yet. Finish the Cloudflare Access step first.', setup: true }, 403);
   const cookie = (request.headers.get('cookie') || '').match(/(?:^|;\s*)CF_Authorization=([^;]+)/);
   const token = request.headers.get('cf-access-jwt-assertion') || (cookie && cookie[1]);
-  let who = null;
-  try { if (token) who = await verify(token, env) } catch (e) { console.error('access check failed', e) }
-  if (!who) return json({ error: 'Please sign in again to use the manager view.', signin: true }, 401);
-  ctx.data.manager = who;
+  let r = { why: 'No sign-in pass reached the site. Check that the Access application covers cantinafortmyersevents.com/api/manager.' };
+  try { if (token) r = await verify(token, env) } catch (e) { console.error('access check failed', e); r = { why: 'Could not check the sign-in: ' + String(e.message || e).slice(0, 120) } }
+  if (!r.who) return json({ error: 'Please sign in again to use the manager view.', why: r.why, signin: true }, 401);
+  ctx.data.manager = r.who;
   return ctx.next();
 }
