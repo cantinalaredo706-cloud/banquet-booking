@@ -129,7 +129,7 @@ export function makeAvail(slots, now = Date.now()) {
   }
   function needsApproval(sp, ds) {
     if (sp === 'pdr') return 'Private Dining Room — every booking needs your approval';
-    if (sp === 'bar') return 'Bar — approval rule not set yet';
+    if (sp === 'bar') return 'Bar — every booking needs your approval';
     const n = partiesOn('dr', ds).length; return n >= 2 ? `Dining Room — party #${n + 1} that day` : null;
   }
   /* Server-side check that the chosen slot is still open. Returns a message, or null if fine. */
