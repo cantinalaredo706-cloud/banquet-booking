@@ -17,7 +17,12 @@ async function getKeys(team, force) {
 }
 
 async function verify(token, env) {
-  const team = 'https://' + String(env.ACCESS_TEAM_DOMAIN).trim().replace(/^["']|["']$/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  // ACCESS_TEAM_DOMAIN may list more than one name, separated by commas (e.g. the new team name first, then the old one
+  // during a rename). Keys always come from the FIRST name, so a sign-in must be signed by this team's own keys.
+  const teams = String(env.ACCESS_TEAM_DOMAIN).split(',')
+    .map(t => 'https://' + t.trim().replace(/^["']|["']$/g, '').replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
+    .filter(t => t !== 'https://');
+  const team = teams[0];
   const [h, p, s] = token.split('.');
   if (!h || !p || !s) return { why: 'The sign-in pass is not in the expected format.' };
   const header = JSON.parse(b64uText(h)), payload = JSON.parse(b64uText(p));
@@ -31,7 +36,7 @@ async function verify(token, env) {
   const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   const now = Math.floor(Date.now() / 1000);
   const wantAud = String(env.ACCESS_AUD || '').trim();
-  if (payload.iss !== team) return { why: `The sign-in came from ${String(payload.iss).replace('https://', '')}, but ACCESS_TEAM_DOMAIN is set to ${team.replace('https://', '')}.` };
+  if (!teams.includes(payload.iss)) return { why: `The sign-in came from ${String(payload.iss).replace('https://', '')}, but ACCESS_TEAM_DOMAIN is set to ${teams.map(t => t.replace('https://', '')).join(', ')}.` };
   if (wantAud && !aud.includes(wantAud)) return { why: 'ACCESS_AUD does not match this Access application. Delete the ACCESS_AUD setting (it is optional) and redeploy.' };
   if (!(payload.exp > now)) return { why: 'The sign-in has expired.' };
   return { who: payload.email || payload.common_name || 'manager' };
