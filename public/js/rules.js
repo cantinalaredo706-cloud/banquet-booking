@@ -16,7 +16,7 @@ export const SPACES = {
   dr: { id: 'dr', name: 'Dining Room', short: 'Up to 100 guests · shared room', minG: 11, maxG: 100, cancelH: 12, countDays: 2,
     desc: 'Our Dining Room seats up to 100. We arrange tables to make your group comfortable. Pick any arrival time.' },
   pdr: { id: 'pdr', name: 'Private Dining Room', short: 'Up to 40 guests · private', minG: 1, maxG: 40, cancelH: 72, countDays: 2,
-    desc: 'A private room for up to 40 guests. No rental fee, just a food & beverage minimum. TV with HDMI available for $75.' },
+    desc: 'A private room for up to 40 guests (32 with a buffet, to make room for the buffet setup). No rental fee, just a food & beverage minimum. TV with HDMI available for $75.' },
   bar: { id: 'bar', name: 'Bar', short: 'Up to about 50 guests · bar area', minG: 11, maxG: 50, cancelH: 24, countDays: 2,
     desc: 'Our Bar Area seats about 50 guests. We arrange tables to make your group comfortable. Pick any arrival time.' }
 };
@@ -128,12 +128,12 @@ export const LUNCH_MENUS = {
 export const LUNCH_SET = Object.keys(LUNCH_MENUS).map(Number).sort((a, b) => a - b);
 const RETIRED_LUNCH = [22];
 export const BUFFETS = [
-  { id: 'appbuf', name: 'Appetizer Buffet', price: 15.99, desc: "Chef's choice: potato kegs, corn nuggets, quesadillas, chicken wings, fried cauliflower, Southwest eggrolls, queso, and chips & salsa." },
-  { id: 'taco2', name: 'Taco Buffet · 2 per guest', price: 14.99, desc: 'Ground beef, shredded chicken, rice, refried beans, flour tortillas and all the taco fillings. Chips & salsa.' },
-  { id: 'taco3', name: 'Taco Buffet · 3 per guest', price: 16.49, desc: 'Same as above, three tacos per guest.' },
-  { id: 'fajl', name: 'Fajita Buffet · lunch portion', price: 18.99, desc: 'Steak, chicken, grilled peppers & onions, rice, refried beans, flour tortillas, sour cream, guacamole, pico de gallo. Chips & salsa.' },
-  { id: 'fajd', name: 'Fajita Buffet · dinner portion', price: 27.99, desc: 'Same as above, dinner portions.' },
-  { id: 'brunch', name: 'Brunch Buffet', price: 13.99, brunch: true, desc: 'Chorizo con Huevos, Tostar, Chilaquiles, Migas and mixed fruit. One complimentary Bloody Mary or Mimosa per guest 21+. Saturdays & Sundays, 10 am–3 pm.' },
+  { id: 'appbuf', table: true, name: 'Appetizer Buffet', price: 15.99, desc: "Chef's choice: potato kegs, corn nuggets, quesadillas, chicken wings, fried cauliflower, Southwest eggrolls, queso, and chips & salsa." },
+  { id: 'taco2', table: true, name: 'Taco Buffet · 2 per guest', price: 14.99, desc: 'Ground beef, shredded chicken, rice, refried beans, flour tortillas and all the taco fillings. Chips & salsa.' },
+  { id: 'taco3', table: true, name: 'Taco Buffet · 3 per guest', price: 16.49, desc: 'Same as above, three tacos per guest.' },
+  { id: 'fajl', table: true, name: 'Fajita Buffet · lunch portion', price: 18.99, desc: 'Steak, chicken, grilled peppers & onions, rice, refried beans, flour tortillas, sour cream, guacamole, pico de gallo. Chips & salsa.' },
+  { id: 'fajd', table: true, name: 'Fajita Buffet · dinner portion', price: 27.99, desc: 'Same as above, dinner portions.' },
+  { id: 'brunch', table: true, name: 'Brunch Buffet', price: 13.99, brunch: true, desc: 'Chorizo con Huevos, Tostar, Chilaquiles, Migas and mixed fruit. One complimentary Bloody Mary or Mimosa per guest 21+. Saturdays & Sundays, 10 am–3 pm.' },
   { id: 'fl', name: 'Floating Apps · Light', price: 14.99, desc: 'Two hours of finger-food appetizers brought to your group.' },
   { id: 'fm', name: 'Floating Apps · Medium', price: 17.99, desc: 'Two hours of finger-food appetizers, a fuller mix.' },
   { id: 'fh', name: 'Floating Apps · Heavy', price: 20.99, desc: 'Two hours of heavier appetizers, guacamole included.' }
@@ -268,6 +268,8 @@ export function makeAvail(slots, now = Date.now()) {
 /* ---------- Menus and the estimate ---------- */
 /* Parties of more than 25 can't order from the regular menu; they choose a set menu or a buffet. */
 export const MENU_MAX_GUESTS = 25;
+/* A buffet table (table: true in BUFFETS) takes up room in the Private Dining Room. */
+export const PDR_BUFFET_MAX = 32;
 export const menuBlocked = guests => (parseInt(guests, 10) || 0) > MENU_MAX_GUESTS;
 export function foodInfo(id) {
   if (!id) return null; if (id === 'menu') return { id, name: 'Order from our menu at the event', price: null };
@@ -317,6 +319,7 @@ export function validateDetails(space, sel, f) {
   else {
     if (g < sp.minG) errs.push(`The ${sp.name} books parties of ${sp.minG} or more online. For 10 or fewer, please use our regular reservations.`);
     if (sp.maxG && g > sp.maxG) errs.push(`The ${sp.name} holds up to ${sp.maxG} guests.`);
+    else if (space === 'pdr' && fi && fi.table && g > PDR_BUFFET_MAX) errs.push(`With a buffet, the Private Dining Room holds up to ${PDR_BUFFET_MAX} guests to make room for the buffet setup. Lower your guest count to ${PDR_BUFFET_MAX} or fewer, or choose a set menu or Floating Apps.`);
   }
   if (!fi || fi.retired) errs.push('Choose a food option.');
   else if (g) {
