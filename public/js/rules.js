@@ -349,33 +349,50 @@ export function agreementHtml(o) {
 
 /* ---------- Checking the party details (Step 3) ---------- */
 export const freshForm = () => ({ name: '', email: '', phone: '', org: '', type: 'Birthday', guests: '', food: '', brunchAdd: false, platS: 0, platL: 0, bar: 'cash', barOpen: 'full', barLimited: '', barCap: '', barTickets: '', checks: '1', tv: false, notes: '' });
-export function validateDetails(space, sel, f) {
-  const sp = SPACES[space], g = parseInt(f.guests, 10), fi = foodInfo(f.food), errs = [];
+/* Step 2: the guest count for the chosen space. */
+export function validateGuests(space, f) {
+  const sp = SPACES[space], g = parseInt(f.guests, 10), errs = [];
   if (!sp) return ['Choose a space.'];
-  if (!f.name.trim()) errs.push('Enter the reservation name.');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) errs.push('Enter a valid email address.');
-  if (f.phone.replace(/\D/g, '').length < 10) errs.push('Enter a phone number with area code.');
   if (!g || g < 1) errs.push('Enter the number of guests.');
   else {
     if (g < sp.minG) errs.push(`The ${sp.name} books parties of ${sp.minG} or more online. For 10 or fewer, please use our regular reservations.`);
     if (sp.maxG && g > sp.maxG) errs.push(`The ${sp.name} holds up to ${sp.maxG} guests.`);
-    else if (space === 'pdr' && fi && fi.table && g > PDR_BUFFET_MAX) errs.push(`With a buffet, the Private Dining Room holds up to ${PDR_BUFFET_MAX} guests to make room for the buffet setup. Lower your guest count to ${PDR_BUFFET_MAX} or fewer, or choose a set menu or Floating Apps.`);
   }
+  return errs;
+}
+/* Step 3: food, platters and bar. */
+export function validateFood(space, sel, f) {
+  const sp = SPACES[space], g = parseInt(f.guests, 10), fi = foodInfo(f.food), errs = [];
+  if (!sp) return ['Choose a space.'];
   if (!fi || fi.retired) errs.push('Choose a food option.');
   else if (fi.id.startsWith('set-l-') && !lunchMenusOK(sel.time)) errs.push('Lunch menus are for parties starting before 3:00 pm. Please choose a dinner menu or another option.');
   else if (g) {
     if (fi.id === 'menu' && menuBlocked(g)) errs.push('Parties of more than 25 choose a set menu or a buffet.');
     if (fi.buffet && g < 12) errs.push('Buffets and appetizer parties need at least 12 guests.');
+    if (space === 'pdr' && fi.table && g > PDR_BUFFET_MAX && !(sp.maxG && g > sp.maxG)) errs.push(`With a buffet, the Private Dining Room holds up to ${PDR_BUFFET_MAX} guests to make room for the buffet setup. Lower your guest count to ${PDR_BUFFET_MAX} or fewer, or choose a set menu or Floating Apps.`);
   }
   if (fi && fi.brunch && sel.date) { const day = space === 'pdr' ? sel.block === 'lunch' : sel.time < 15 * 60; if (!(isSatSun(sel.date) && day)) errs.push('Brunch is only offered Saturdays and Sundays, 10 am–3 pm.') }
+  if ((+f.platS || 0) < 0 || (+f.platS || 0) > 10 || (+f.platL || 0) < 0 || (+f.platL || 0) > 10) errs.push('Choose between 0 and 10 platters.');
   if (!BAROPTS.some(b => b.id === f.bar)) errs.push('Choose a bar option.');
   if (f.bar === 'open' && f.barOpen === 'limited' && !f.barLimited.trim()) errs.push('List which drinks the limited bar includes.');
   if (f.bar === 'cap' && !(+f.barCap > 0)) errs.push('Enter the bar spending limit.');
   if (f.bar === 'tickets' && !(+f.barTickets > 0)) errs.push('Enter how many drink tickets each guest gets.');
+  return errs;
+}
+/* Step 4: contact details and how the bill is paid. */
+export function validateContact(f) {
+  const fi = foodInfo(f.food), errs = [];
+  if (!f.name.trim()) errs.push('Enter the reservation name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) errs.push('Enter a valid email address.');
+  if (f.phone.replace(/\D/g, '').length < 10) errs.push('Enter a phone number with area code.');
   if (!['1', '2', '3'].includes(String(f.checks))) errs.push('Choose how many checks.');
   else if (fi && fi.oneCheck && String(f.checks) !== '1') errs.push('Buffet or appetizer parties pay all food on one check.');
-  if ((+f.platS || 0) < 0 || (+f.platS || 0) > 10 || (+f.platL || 0) < 0 || (+f.platL || 0) > 10) errs.push('Choose between 0 and 10 platters.');
   return errs;
+}
+/* Everything at once (the server checks this before saving a booking). */
+export function validateDetails(space, sel, f) {
+  if (!SPACES[space]) return ['Choose a space.'];
+  return [...validateContact(f), ...validateGuests(space, f), ...validateFood(space, sel, f)];
 }
 export const sigMatches = (sig, name) => String(sig).trim().toLowerCase() === String(name).trim().toLowerCase() && !!String(name).trim();
 

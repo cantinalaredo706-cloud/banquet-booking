@@ -264,3 +264,15 @@ input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:
 .entrees li{max-width:62ch}
 .menu-pick{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 .menu-pick h4{margin:0;font-family:var(--f-display);font-weight:400;font-size:1.05rem}
+
+/* Step 3: set menus as selectable cards */
+.menus{gap:12px}
+.menucard{display:flex;flex-direction:column;gap:8px;cursor:pointer;padding:14px 16px}
+.menucard:hover{border-color:var(--accent)}
+.menucard:has(input:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.menucard:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.mc-head{display:flex;align-items:center;gap:10px}
+.mc-head input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.mc-head .price{font-family:var(--f-display);font-size:1.4rem}
+.mc-head .price small{font-family:var(--f-body);font-size:.8rem;color:var(--muted)}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;cursor:pointer;font-size:inherit}
