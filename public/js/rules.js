@@ -24,7 +24,6 @@ const DR_FEES = [[8, 150], [15, 200], [25, 250], [Infinity, 300]];
 export const drFee = g => DR_FEES.find(([max]) => g <= max)[1];
 const BAR_FEES = [[8, 100], [15, 150], [25, 200], [Infinity, 250]]; // from the 2026–2027 Bar contract
 export const barFee = g => BAR_FEES.find(([max]) => g <= max)[1];
-export const LUNCH_SET = [20, 22, 25];
 /* Dinner set menus, from the menu sheets Jim sent on Nov 5, 2026 (one per price).
    Each menu: appetizers for the table, entrée choices, dessert choices.
    To add, remove or reprice a menu, change this list only. */
@@ -102,6 +101,32 @@ export const DINNER_MENUS = {
 export const DINNER_SET = Object.keys(DINNER_MENUS).map(Number).sort((a, b) => a - b);
 /* Prices no longer offered, kept only so older bookings still show their menu in the manager view. */
 const RETIRED_DINNER = [85];
+
+/* Lunch set menus, from the menu sheets Jim sent on Nov 5, 2026. */
+const L = (name, desc) => ({ name, desc });
+export const LUNCH_MENUS = {
+  18: { appsLabel: 'Beginning', apps: ['Fire-Roasted Salsa & Chips'], entrees: [
+      L('Traditional Tacos', 'Crispy tacos with seared ground sirloin, lettuce, tomato and cheddar cheese. With rice & beans.'),
+      L('Cantina Chicken Bowl', 'Grilled chicken breast, cilantro lime rice, black beans, corn, jalapeño, pico de gallo and Monterey Jack cheese. With chipotle wine sauce, queso fresco and cilantro.'),
+      L('Tamales', '2 seared ground sirloin tamales with chili con carne sauce. Served with rice & beans.'),
+      L('Cilantro Lime Chicken Salad', 'Fajita chicken with black beans, red pepper, Monterey Jack cheese and avocado. With cilantro-lime dressing.')],
+      desserts: null },
+  20: { appsLabel: 'Beginning', apps: ['Fire-Roasted Salsa & Chips'], entrees: [
+      L('Traditional Tacos', 'Crispy tacos with seared ground sirloin, lettuce, tomato and cheddar cheese.'),
+      L('Crispy Carnita Bowl', 'Crispy pork carnitas, cilantro lime rice, black beans, corn, jalapeño, pico de gallo and Monterey Jack cheese. With chipotle wine sauce and cilantro.'),
+      L('Monterey', 'Chicken enchilada, soft chicken taco with rice and beans.'),
+      L('Taco Salad', 'Ground beef or shredded chicken served on top of a bed of lettuce with sour cream and guacamole in a taco bowl.')],
+      desserts: 'Taste of Flan or Brownie' },
+  25: { apps: ['Fire-roasted Salsa and Chips', 'Top Shelf Guacamole'], entrees: [
+      L('Tamales', 'Spiced seasoned pulled beef tamales topped with roasted red peppers, tomatillo sauce, cilantro, queso fresco and roasted chorizo corn.'),
+      L('Pollo Tampico', 'Grilled chicken breast topped with sauteed artichokes, mushrooms, spinach and red bell pepper. Topped with sour cream poblano sauce and Monterey Jack cheese.'),
+      L('Cilantro Lime Chicken Salad', 'Fajita chicken with black beans, red bell pepper, Monterey Jack cheese and avocado. With cilantro lime dressing.'),
+      L('Asada y Enchilada', 'Grilled skirt steak with house marinated onions and chimichurri sauce. With a Veracruz enchilada, black beans and cilantro lime rice.'),
+      L('Shrimp & Strawberry Salad', 'Grilled shrimp with field greens, pineapple, jicama, strawberries, avocado, candied walnuts and queso fresco.')],
+      desserts: 'Taste of Brownie or Flan' }
+};
+export const LUNCH_SET = Object.keys(LUNCH_MENUS).map(Number).sort((a, b) => a - b);
+const RETIRED_LUNCH = [22];
 export const BUFFETS = [
   { id: 'appbuf', name: 'Appetizer Buffet', price: 15.99, desc: "Chef's choice: potato kegs, corn nuggets, quesadillas, chicken wings, fried cauliflower, Southwest eggrolls, queso, and chips & salsa." },
   { id: 'taco2', name: 'Taco Buffet · 2 per guest', price: 14.99, desc: 'Ground beef, shredded chicken, rice, refried beans, flour tortillas and all the taco fillings. Chips & salsa.' },
@@ -245,9 +270,9 @@ export function foodInfo(id) {
   if (!id) return null; if (id === 'menu') return { id, name: 'Order from our menu at the event', price: null };
   if (id.startsWith('set-')) {
     const [, k, p] = id.split('-'); const list = k === 'l' ? LUNCH_SET : k === 'd' ? DINNER_SET : [];
-    const retired = k === 'd' && RETIRED_DINNER.includes(+p);
+    const retired = (k === 'd' && RETIRED_DINNER.includes(+p)) || (k === 'l' && RETIRED_LUNCH.includes(+p));
     if (!list.includes(+p) && !retired) return null;
-    return { id, name: `${k === 'l' ? 'Lunch' : 'Dinner'} set menu · ${money0(+p)}${retired ? ' (no longer offered)' : ''}`, price: +p, set: true, retired, menu: k === 'd' ? DINNER_MENUS[+p] || null : null };
+    return { id, name: `${k === 'l' ? 'Lunch' : 'Dinner'} set menu · ${money0(+p)}${retired ? ' (no longer offered)' : ''}`, price: +p, set: true, retired, menu: (k === 'd' ? DINNER_MENUS : k === 'l' ? LUNCH_MENUS : {})[+p] || null };
   }
   const b = BUFFETS.find(x => x.id === id); return b ? Object.assign({ buffet: true, oneCheck: true }, b) : null;
 }
