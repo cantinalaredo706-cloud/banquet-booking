@@ -64,10 +64,10 @@ function stepBrowse() {
       <p class="small muted">Fee applies within 24 hours of the event, or if the party hasn't arrived 30 minutes after its time.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="bar">Check Bar dates</button></article></div>
     <p class="small muted">Parties of 10 or fewer in the Dining Room or Bar: please use our regular reservations. A 22% gratuity and 6.5% sales tax are added to every party's check.</p>`;
-  if (t === 'set') body = `<div class="card setgrid"><p class="muted">Parties of 25 or more choose a set menu. <span class="pending">Menu details coming soon</span></p>
-    <div class="setrow"><div><span class="eyebrow">Lunch</span></div><div class="chips">${LUNCH_SET.map(p => `<span class="chip"><span>${money0(p)}</span></span>`).join('')}</div></div>
-    <div class="setrow"><div><span class="eyebrow">Dinner</span></div><div class="chips">${DINNER_SET.map(p => `<span class="chip"><span>${money0(p)}</span></span>`).join('')}</div></div>
-    <p class="small muted">Prices are per guest, before tax and gratuity.</p></div>`;
+  if (t === 'set') body = `<p class="muted">Parties of 25 or more choose a set menu. Prices are per guest, before tax and gratuity.</p>
+    <div class="card setgrid"><div class="setrow"><div><span class="eyebrow">Lunch</span></div><div class="chips">${LUNCH_SET.map(p => `<span class="chip"><span>${money0(p)}</span></span>`).join('')} <span class="pending">Menu details coming soon</span></div></div></div>
+    <div><span class="eyebrow">Dinner menus</span></div>
+    <div class="grid">${DINNER_SET.map(p => `<article class="card offer"><div class="price">${money0(p)} <small>per guest</small></div>${menuDetail(R.DINNER_MENUS[p])}</article>`).join('')}</div>`;
   if (t === 'buffets') body = `<p class="muted">Buffets need at least 12 guests and are available in all three spaces. For buffet or appetizer parties, all food is paid on one check.</p><div class="grid">${BUFFETS.map(b => `<article class="card offer"><h3>${b.name}</h3><div class="price">${money(b.price)} <small>per guest</small></div><p class="muted small">${b.desc}</p></article>`).join('')}
     <article class="card offer"><h3>Appetizer Platters</h3><div class="price">$75 / $95</div><p class="muted small">Small feeds 12–15, large feeds 18–21. Chef's choice from potato kegs, corn nuggets, empanadas, quesadillas, fried cauliflower, chicken wings, Southwest eggrolls, queso & guacamole, chips & salsa.</p></article></div>
     <p class="small muted">Brunch add-on: coffee, tea and orange juice for $2 per guest. "Chef's choice" means the chef selects the appetizers based on availability; we're happy to consider your preferences.</p>`;
@@ -126,9 +126,10 @@ function stepDetails() {
     <label class="f">Number of guests <span class="hint">${sp.id === 'pdr' ? 'Up to 40' : sp.id === 'dr' ? '11 to 100' : '11 or more'}</span><input type="number" id="f-guests" data-f="guests" min="${sp.minG}" ${sp.maxG ? `max="${sp.maxG}"` : ''} value="${esc(f.guests)}" inputmode="numeric"></label>
     <fieldset class="full"><legend>Food <span class="hint muted" style="font-weight:400">· parties of 25+ choose a set menu or buffet</span></legend>
       ${radio('menu', 'Order from our menu at the event', '<span class="small muted">Under 25 guests only. No estimate.</span>')}
-      <div><span class="eyebrow">Set menus · per guest</span> <span class="pending">Details coming soon</span></div>
-      <div class="setrow"><span class="small muted">Lunch</span><div class="chips">${LUNCH_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-l-${p}" data-f="food" value="set-l-${p}" ${f.food === 'set-l-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
+      <div><span class="eyebrow">Set menus · per guest</span></div>
+      <div class="setrow"><span class="small muted">Lunch</span><div class="chips">${LUNCH_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-l-${p}" data-f="food" value="set-l-${p}" ${f.food === 'set-l-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')} <span class="pending">Details coming soon</span></div></div>
       <div class="setrow"><span class="small muted">Dinner</span><div class="chips">${DINNER_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-d-${p}" data-f="food" value="set-d-${p}" ${f.food === 'set-d-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
+      <div class="menu-pick" id="menuPick" ${f.food && f.food.startsWith('set-d-') ? '' : 'hidden'}>${pickedMenu(f.food)}</div>
       <div><span class="eyebrow">Buffets & appetizers · 12 guest minimum · one check</span></div>
       <div class="choices">${BUFFETS.map(b => radio(b.id, b.name, `<span class="mono">${money(b.price)}</span>/guest${b.brunch && !brunchOK ? '<br><span class="small">Sat & Sun, 10 am–3 pm only</span>' : ''}`, b.brunch && !brunchOK)).join('')}</div>
       <label class="check" id="brunchAddRow" ${f.food === 'brunch' ? '' : 'hidden'}><input type="checkbox" id="f-brunchAdd" data-fc="brunchAdd" ${f.brunchAdd ? 'checked' : ''}><span>Add coffee, tea and orange juice ($2 per guest)</span></label>
@@ -145,6 +146,16 @@ function stepDetails() {
   </div></div>
   <div class="actions"><button type="button" class="btn ghost" data-action="goto" data-n="2">← Back</button><button type="button" class="btn primary" data-action="next">Review agreement →</button></div>`
 }
+function menuDetail(m) {
+  if (!m) return '';
+  return `<div class="menu-sec"><span class="eyebrow">Appetizers</span><p class="small">${m.apps.map(esc).join(' · ')}</p></div>
+    <div class="menu-sec"><span class="eyebrow">Entrées</span><ul class="entrees">${m.entrees.map(x => `<li><b>${esc(x.name)}</b> <span class="muted">${esc(x.desc)}</span></li>`).join('')}</ul></div>
+    <div class="menu-sec"><span class="eyebrow">Postres</span><p class="small">${esc(m.desserts)}</p></div>`;
+}
+function pickedMenu(id) {
+  const fi = R.foodInfo(id);
+  return fi && fi.menu ? `<h4>${esc(fi.name)}</h4>${menuDetail(fi.menu)}` : '';
+}
 function barSub(id) {
   const f = S.form, show = f.bar === id;
   if (id === 'open') return `<div class="sub" data-for="open" ${show ? '' : 'hidden'}><div class="inline"><label class="check"><input type="radio" name="barOpen" id="bo-full" data-f="barOpen" value="full" ${f.barOpen === 'full' ? 'checked' : ''}><span>Fully open</span></label><label class="check"><input type="radio" name="barOpen" id="bo-lim" data-f="barOpen" value="limited" ${f.barOpen === 'limited' ? 'checked' : ''}><span>Limited</span></label></div><label class="f">Which drinks? <span class="hint">For a limited bar</span><input type="text" id="f-barLimited" data-f="barLimited" value="${esc(f.barLimited)}" maxlength="300"></label></div>`;
@@ -156,6 +167,7 @@ function syncDetailsUI() {
   const f = S.form, fi = R.foodInfo(f.food);
   document.querySelectorAll('.sub[data-for]').forEach(el => el.hidden = el.dataset.for !== f.bar);
   const br = document.getElementById('brunchAddRow'); if (br) br.hidden = f.food !== 'brunch';
+  const mp = document.getElementById('menuPick'); if (mp) { const html = pickedMenu(f.food); mp.innerHTML = html; mp.hidden = !html }
   const one = fi && fi.oneCheck; ['2', '3'].forEach(n => { const el = document.getElementById('ck-' + n); if (el) el.disabled = !!one });
   if (one && f.checks !== '1') { f.checks = '1'; const c = document.getElementById('ck-1'); if (c) c.checked = true }
   const note = document.getElementById('checksNote'); if (note) note.textContent = one ? 'Buffet or appetizer party: all food is paid on one check.' : 'Maximum of 3 checks. Buffet or appetizer parties pay all food on one check.';

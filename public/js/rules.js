@@ -25,7 +25,83 @@ export const drFee = g => DR_FEES.find(([max]) => g <= max)[1];
 const BAR_FEES = [[8, 100], [15, 150], [25, 200], [Infinity, 250]]; // from the 2026–2027 Bar contract
 export const barFee = g => BAR_FEES.find(([max]) => g <= max)[1];
 export const LUNCH_SET = [20, 22, 25];
-export const DINNER_SET = []; for (let p = 30; p <= 90; p += 5) DINNER_SET.push(p);
+/* Dinner set menus, from the menu sheets Jim sent on Nov 5, 2026 (one per price).
+   Each menu: appetizers for the table, entrée choices, dessert choices.
+   To add, remove or reprice a menu, change this list only. */
+const E = (name, desc) => ({ name, desc });
+const POLLO_TAMPICO = E('Pollo Tampico', 'Grilled chicken breast topped with sauteed artichoke, mushrooms, spinach and red bell pepper. With sour cream poblano sauce and Monterey Jack cheese.');
+const CL_SALAD = E('Cilantro Lime Chicken Salad', 'Fajita chicken with black beans, red bell peppers, Monterey Jack cheese and avocado. With cilantro lime dressing.');
+const CL_SALAD_1 = E('Cilantro Lime Chicken Salad', 'Fajita chicken with black beans, red bell pepper, Monterey Jack cheese and avocado. With cilantro lime dressing.');
+const CARNITAS_BOWL = E('Crispy Carnitas Bowl', 'Crispy pork carnitas, cilantro lime rice, black beans, corn, fresh jalapeños pico de gallo and Monterey Jack cheese. Topped with chipotle wine sauce and cilantro.');
+const FAJITAS = E('Fajitas', 'Choice of chicken or steak fajitas with rice and refried beans. Served with sour cream, guacamole, flour tortillas and pico de gallo.');
+const SALMON = E('Salmon', 'Grilled salmon with chimichurri sauce. Served with cilantro lime rice and fresh grilled asparagus.');
+const SHRIMP_ENCH = E('Shrimp Enchiladas', 'Enchiladas with Monterey Jack cheese, sauteed shrimp and red bell pepper on a bed of spinach and Veracruz vegetables. Topped with sour cream sauce, with a side of cilantro lime rice.');
+const ASADA_8 = E('Carne Asada', '8 oz grilled steak topped with marinated onions and chimichurri sauce. Served with cilantro lime rice, black beans and avocado slices.');
+const TACOS_CARBON = E('Tacos al Carbon', 'Choice of grilled chicken or steak tacos inside grilled flour tortillas. Served with rice, refried beans, chili con queso, sour cream, guacamole and pico de gallo.');
+const RIBEYE = E('Cascabel Ribeye', '16 oz Certified Angus Beef cowboy-cut bone-in ribeye, aged 21 days, then basted with Cascabel sauce. Served with confit potatoes and fresh grilled asparagus.');
+const SEA_BASS = E('Chilean Sea Bass', '8 oz pan-seared sea bass topped with jalapeño beurre blanc sauce. Served with cilantro lime rice and fresh grilled asparagus.');
+const MAR_Y_TIERRA = E('Mar y Tierra', '8 oz Certified Angus Beef filet mignon with grilled shrimp and red wine mushroom sauce. Served with confit potatoes and fresh grilled asparagus.');
+const RIBEYE_FAJITA = E('Ribeye Fajita', '16 oz Certified Angus Beef cowboy-cut bone-in ribeye, served fajita style. With rice, beans, tortillas, sour cream, guacamole and pico de gallo.');
+const CHIPS = 'Fire-roasted salsa and chips', GUAC = 'Top Shelf Guacamole';
+export const DINNER_MENUS = {
+  25: { apps: [CHIPS, 'Queso y Guac'], entrees: [
+      E('Quesadillas', 'Chicken fajita or beef fajita quesadilla with onions and tomatoes. Served with sour cream and guacamole.'),
+      E('Pollo Chipotle', 'Grilled chicken breast with chipotle wine sauce and Monterey Jack cheese. Served with charred corn and black beans.'),
+      CARNITAS_BOWL, CL_SALAD_1], desserts: 'Taste of Brownie or Flan' },
+  27: { apps: [CHIPS, 'Chili con Queso'], entrees: [
+      E('Tamales Dinner', 'Spiced seasoned pulled beef tamales topped with roasted red peppers, tomatillo sauce, cilantro, queso fresco and roasted chorizo corn. With rice and refried beans.'),
+      E('Pollo Tampico', 'Grilled chicken breast topped with sauteed artichokes, mushrooms, spinach and red bell pepper. Topped with sour cream poblano sauce and Monterey Jack cheese.'),
+      E('Shrimp Quesadilla', 'Shrimp, spinach, mushrooms and Monterey Jack cheese in a flour tortilla, served with sour cream and guacamole.'),
+      CL_SALAD_1, CARNITAS_BOWL], desserts: 'Taste of Brownie or Flan' },
+  30: { apps: [CHIPS, GUAC], entrees: [FAJITAS, POLLO_TAMPICO, SALMON, CL_SALAD,
+      E('Cantina Bowl', 'Crispy pork carnitas or grilled chicken with cilantro lime rice, black beans, corn, fresh jalapeños pico de gallo and Monterey Jack cheese. Topped with chipotle wine sauce and cilantro.')],
+      desserts: 'Flan or Raspberry Cheesecake' },
+  35: { apps: [CHIPS, GUAC], entrees: [FAJITAS, POLLO_TAMPICO,
+      E('Grouper Tacos', 'Flour tortillas with fresh fried grouper filets, lettuce, tomato and queso fresco. Rice and black beans.'),
+      CL_SALAD, SHRIMP_ENCH], desserts: 'Taste of Brownie or Flan' },
+  40: { apps: [CHIPS, 'Queso y Guac Combination'], entrees: [ASADA_8, POLLO_TAMPICO,
+      E('Mahi Mahi', 'Pan-seared mahi mahi with roasted red pepper sauce. Served with cilantro lime rice and fresh grilled asparagus.'),
+      CL_SALAD, CARNITAS_BOWL], desserts: 'Flan or Raspberry Cheesecake' },
+  45: { apps: [CHIPS, GUAC], entrees: [ASADA_8, POLLO_TAMPICO, SALMON, CL_SALAD,
+      E('Cantina Bowl', 'Crispy pork carnitas or grilled chicken, with cilantro lime rice, black beans, corn, fresh jalapeños pico de gallo and Monterey Jack cheese. Topped with chipotle wine sauce, queso fresco and cilantro.')],
+      desserts: 'Flan or Raspberry Cheesecake' },
+  50: { apps: [CHIPS, GUAC], entrees: [
+      E('Carne Asada', 'Fire-charred skirt steak with chimichurri sauce, lime-marinated onions, avocado, black beans and cilantro lime rice.'),
+      POLLO_TAMPICO,
+      E('Tacos al Carbon', 'Choice of grilled chicken or steak tacos inside grilled flour tortillas. Served with rice, black beans, chili con queso, sour cream, guacamole and pico de gallo.'),
+      SALMON, SHRIMP_ENCH], desserts: 'Flan or Raspberry Cheesecake' },
+  55: { apps: [CHIPS, GUAC], entrees: [FAJITAS, POLLO_TAMPICO, ASADA_8,
+      E('Cilantro Salad', 'Choice of chicken, shrimp or salmon with black beans, red bell peppers, Monterey Jack cheese and avocado. With cilantro lime dressing.'),
+      TACOS_CARBON], desserts: 'Raspberry Cheesecake or Flan' },
+  60: { apps: [CHIPS, GUAC], entrees: [
+      E('Asada Camarones', 'Fire-charred skirt steak with Oaxaca shrimp, red bell pepper, grilled mushrooms and queso fresco on a bed of chimichurri sauce. Served with cilantro lime rice and black beans.'),
+      POLLO_TAMPICO, SALMON, TACOS_CARBON,
+      E('Cantina Laredo Platter', 'Monterey Jack chile relleno, beef tamale, chicken enchilada and steak carbon taco. With rice and beans.')],
+      desserts: 'Raspberry Cheesecake or Flan' },
+  65: { apps: [CHIPS, GUAC], entrees: [
+      E('Filet Portabella', '8 oz Certified Angus Beef filet mignon on a portabella mushroom cap with red wine mushroom sauce. Served with confit potatoes and fresh grilled asparagus.'),
+      POLLO_TAMPICO, RIBEYE, SALMON, SHRIMP_ENCH], desserts: 'Raspberry Cheesecake or Flan' },
+  70: { apps: [CHIPS, GUAC], entrees: [MAR_Y_TIERRA, POLLO_TAMPICO, RIBEYE, SEA_BASS], desserts: '6-Layer Chocolate Cake or Raspberry Cheesecake' },
+  75: { apps: [CHIPS, GUAC], entrees: [
+      E('Filet Chimichurri', 'Thinly sliced 8 oz Certified Angus Beef filet mignon with chimichurri sauce. Served with confit potatoes and fresh grilled asparagus.'),
+      RIBEYE, SEA_BASS,
+      E('Oaxaca Shrimp', 'Six bacon-wrapped shrimp stuffed with Oaxaca cheese and jalapeño. Served on a bed of cilantro lime rice with a side of tomatillo sauce.')],
+      desserts: 'Raspberry Cheesecake or 6-Layer Chocolate Cake' },
+  80: { apps: [CHIPS, GUAC], entrees: [MAR_Y_TIERRA,
+      E('Tres Amigos', 'A delicious combination of carnitas, carne asada and Oaxaca shrimp. Served with rice and refried beans.'),
+      RIBEYE_FAJITA, SEA_BASS], desserts: '6-Layer Chocolate Cake or Raspberry Cheesecake' },
+  90: { apps: [CHIPS, GUAC, 'Shrimp Cocktail'], entrees: [MAR_Y_TIERRA,
+      E('Super Tres Amigos', 'A delicious combination of grilled salmon, carnitas, carne asada and Oaxaca shrimp. Served with mixed vegetables.'),
+      RIBEYE_FAJITA, SEA_BASS], desserts: 'Raspberry Cheesecake, 6-Layer Chocolate Cake or Caramel Flan' },
+  100: { apps: [CHIPS, 'Queso y Guacamole', 'Choice of Sopa de Tortilla or Garden Salad'], entrees: [
+      E('Wagyu Fajitas', 'Australian Wagyu beef with tomatoes and an exotic mushroom mix. Topped with a balsamic glaze and marinated leeks. With sour cream, guacamole, pico de gallo and tortillas.'),
+      MAR_Y_TIERRA,
+      E('Super Tres Amigos', 'A delicious combination of salmon, carnitas, carne asada and Oaxaca shrimp. Served with rice and veggies.'),
+      SEA_BASS], desserts: 'Raspberry Cheesecake or 6-Layer Chocolate Cake' }
+};
+export const DINNER_SET = Object.keys(DINNER_MENUS).map(Number).sort((a, b) => a - b);
+/* Prices no longer offered, kept only so older bookings still show their menu in the manager view. */
+const RETIRED_DINNER = [85];
 export const BUFFETS = [
   { id: 'appbuf', name: 'Appetizer Buffet', price: 15.99, desc: "Chef's choice: potato kegs, corn nuggets, quesadillas, chicken wings, fried cauliflower, Southwest eggrolls, queso, and chips & salsa." },
   { id: 'taco2', name: 'Taco Buffet · 2 per guest', price: 14.99, desc: 'Ground beef, shredded chicken, rice, refried beans, flour tortillas and all the taco fillings. Chips & salsa.' },
@@ -169,8 +245,9 @@ export function foodInfo(id) {
   if (!id) return null; if (id === 'menu') return { id, name: 'Order from our menu at the event', price: null };
   if (id.startsWith('set-')) {
     const [, k, p] = id.split('-'); const list = k === 'l' ? LUNCH_SET : k === 'd' ? DINNER_SET : [];
-    if (!list.includes(+p)) return null;
-    return { id, name: `${k === 'l' ? 'Lunch' : 'Dinner'} set menu · ${money0(+p)}`, price: +p, set: true };
+    const retired = k === 'd' && RETIRED_DINNER.includes(+p);
+    if (!list.includes(+p) && !retired) return null;
+    return { id, name: `${k === 'l' ? 'Lunch' : 'Dinner'} set menu · ${money0(+p)}${retired ? ' (no longer offered)' : ''}`, price: +p, set: true, retired, menu: k === 'd' ? DINNER_MENUS[+p] || null : null };
   }
   const b = BUFFETS.find(x => x.id === id); return b ? Object.assign({ buffet: true, oneCheck: true }, b) : null;
 }
@@ -213,7 +290,7 @@ export function validateDetails(space, sel, f) {
     if (g < sp.minG) errs.push(`The ${sp.name} books parties of ${sp.minG} or more online. For 10 or fewer, please use our regular reservations.`);
     if (sp.maxG && g > sp.maxG) errs.push(`The ${sp.name} holds up to ${sp.maxG} guests.`);
   }
-  if (!fi) errs.push('Choose a food option.');
+  if (!fi || fi.retired) errs.push('Choose a food option.');
   else if (g) {
     if (fi.id === 'menu' && g >= 25) errs.push('Parties of 25 or more choose a set menu or a buffet.');
     if (fi.buffet && g < 12) errs.push('Buffets and appetizer parties need at least 12 guests.');

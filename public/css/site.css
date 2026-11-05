@@ -257,3 +257,10 @@ legend{font-size:.85rem;font-weight:600;margin-bottom:6px}
 .prices tr:first-child td:not(:first-child){text-align:right}
 input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 11px;width:100%}
 .up a[href^="tel:"]{white-space:nowrap}
+
+/* Set menu details */
+.menu-sec{display:flex;flex-direction:column;gap:4px}
+.entrees{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.entrees li{max-width:62ch}
+.menu-pick{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.menu-pick h4{margin:0;font-family:var(--f-display);font-weight:400;font-size:1.05rem}
