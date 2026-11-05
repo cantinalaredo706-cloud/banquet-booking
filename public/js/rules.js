@@ -117,7 +117,7 @@ export const LUNCH_MENUS = {
       L('Monterey', 'Chicken enchilada, soft chicken taco with rice and beans.'),
       L('Taco Salad', 'Ground beef or shredded chicken served on top of a bed of lettuce with sour cream and guacamole in a taco bowl.')],
       desserts: 'Taste of Flan or Brownie' },
-  25: { apps: ['Fire-roasted Salsa and Chips', 'Top Shelf Guacamole'], entrees: [
+  25: { apps: [CHIPS, GUAC], entrees: [
       L('Tamales', 'Spiced seasoned pulled beef tamales topped with roasted red peppers, tomatillo sauce, cilantro, queso fresco and roasted chorizo corn.'),
       L('Pollo Tampico', 'Grilled chicken breast topped with sauteed artichokes, mushrooms, spinach and red bell pepper. Topped with sour cream poblano sauce and Monterey Jack cheese.'),
       L('Cilantro Lime Chicken Salad', 'Fajita chicken with black beans, red bell pepper, Monterey Jack cheese and avocado. With cilantro lime dressing.'),
