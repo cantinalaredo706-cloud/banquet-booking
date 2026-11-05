@@ -118,6 +118,8 @@ function stepDetails() {
   const f = S.form, sp = SPACES[S.space], ds = S.sel.date;
   const inp = (k, l, type = 'text', x = '') => `<label class="f">${l}<input type="${type}" id="f-${k}" data-f="${k}" value="${esc(f[k])}" ${x}></label>`;
   const daytime = S.space === 'pdr' ? S.sel.block === 'lunch' : S.sel.time < 15 * 60; const brunchOK = R.isSatSun(ds) && daytime;
+  const lunchOK = R.lunchMenusOK(S.sel.time); // lunch menus only for parties starting before 3:00 pm
+  if (!lunchOK && f.food.startsWith('set-l-')) f.food = ''; // a later start time was picked after choosing a lunch menu
   const radio = (id, label, sub, dis) => `<label class="choice ${dis ? 'dis' : ''}"><input type="radio" name="food" id="fd-${id}" data-f="food" value="${id}" ${f.food === id ? 'checked' : ''} ${dis ? 'disabled' : ''}><span><b>${label}</b>${sub}</span></label>`;
   return `<div class="panel-head"><span class="eyebrow">Step 3</span><h2>Your party</h2><p class="muted">${R.whenText(Object.assign({ space: S.space }, S.sel))}</p></div><div id="form-errors"></div>
   <div class="card"><div class="form">
@@ -128,7 +130,7 @@ function stepDetails() {
     <fieldset class="full"><legend>Food <span class="hint muted" style="font-weight:400">· parties of more than 25 choose a set menu or buffet</span></legend>
       ${radio('menu', 'Order from our menu at the event', '<span class="small muted" id="menuNote">25 guests or fewer. No estimate.</span>', R.menuBlocked(f.guests))}
       <div><span class="eyebrow">Set menus · per guest</span></div>
-      <div class="setrow"><span class="small muted">Lunch</span><div class="chips">${LUNCH_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-l-${p}" data-f="food" value="set-l-${p}" ${f.food === 'set-l-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
+      ${lunchOK ? `<div class="setrow"><span class="small muted">Lunch</span><div class="chips">${LUNCH_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-l-${p}" data-f="food" value="set-l-${p}" ${f.food === 'set-l-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>` : ''}
       <div class="setrow"><span class="small muted">Dinner</span><div class="chips">${DINNER_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-d-${p}" data-f="food" value="set-d-${p}" ${f.food === 'set-d-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
       <div class="menu-pick" id="menuPick" ${pickedMenu(f.food) ? '' : 'hidden'}>${pickedMenu(f.food)}</div>
       <div><span class="eyebrow">Buffets & appetizers · 12 guest minimum · one check</span></div>

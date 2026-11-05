@@ -34,7 +34,7 @@ function addForm() {
   const sel = (k, opts) => `<select data-add="${k}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(F[k]) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
   const inp = (k, type = 'text', x = '') => `<input type="${type}" data-add="${k}" value="${esc(F[k])}" ${x}>`;
   const times = timeOptions();
-  const foods = [['', 'Not decided yet'], ['menu', 'Order from the menu'], ...R.LUNCH_SET.map(p => [`set-l-${p}`, `Lunch set menu · $${p}`]), ...R.DINNER_SET.map(p => [`set-d-${p}`, `Dinner set menu · $${p}`]), ...R.BUFFETS.map(b => [b.id, b.name])];
+  const foods = [['', 'Not decided yet'], ['menu', 'Order from the menu'], ...(R.lunchMenusOK(F.time) ? R.LUNCH_SET.map(p => [`set-l-${p}`, `Lunch set menu · $${p}`]) : []), ...R.DINNER_SET.map(p => [`set-d-${p}`, `Dinner set menu · $${p}`]), ...R.BUFFETS.map(b => [b.id, b.name])];
   const editing = editId != null;
   return `<div class="card" id="add-card" style="display:flex;flex-direction:column;gap:14px${editing ? ';border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)' : ''}"><h3>${editing ? 'Edit booking' : 'Add a booking'}</h3>${editing ? '<p class="small muted" style="margin-top:-8px">Changes save right away. The booking keeps its status (on hold or confirmed).</p>' : ''}<div id="add-errors"></div>
     <div class="form">
@@ -154,7 +154,11 @@ function addField(el) {
 document.addEventListener('input', e => { if (addField(e.target)) return; if (e.target.id === 'alertTo') { pending.alertTo = e.target.value; D.settings.alertTo = e.target.value } });
 document.addEventListener('change', e => {
   const ak = addField(e.target);
-  if (ak) { if (['space', 'block', 'date'].includes(ak)) { if (ak !== 'date') F.time = ''; render() } return }
+  if (ak) {
+    if (['space', 'block', 'date'].includes(ak)) { if (ak !== 'date') F.time = ''; render() }
+    if (ak === 'time') { if (F.food.startsWith('set-l-') && !R.lunchMenusOK(F.time)) F.food = ''; render() } // lunch menus only before 3:00 pm
+    return
+  }
   const k = e.target.dataset?.pref; if (k) { D.settings.prefs[k] = e.target.checked } });
 
 load();

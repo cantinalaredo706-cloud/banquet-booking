@@ -267,6 +267,9 @@ export function makeAvail(slots, now = Date.now()) {
 
 /* ---------- Menus and the estimate ---------- */
 /* Parties of more than 25 can't order from the regular menu; they choose a set menu or a buffet. */
+/* Lunch set menus are only for parties that start before 3:00 pm. Dinner menus are open to everyone. */
+export const LUNCH_MENU_CUTOFF = 15 * 60;
+export const lunchMenusOK = time => time !== '' && time != null && !isNaN(+time) && +time < LUNCH_MENU_CUTOFF;
 export const MENU_MAX_GUESTS = 25;
 /* A buffet table (table: true in BUFFETS) takes up room in the Private Dining Room. */
 export const PDR_BUFFET_MAX = 32;
@@ -359,6 +362,7 @@ export function validateDetails(space, sel, f) {
     else if (space === 'pdr' && fi && fi.table && g > PDR_BUFFET_MAX) errs.push(`With a buffet, the Private Dining Room holds up to ${PDR_BUFFET_MAX} guests to make room for the buffet setup. Lower your guest count to ${PDR_BUFFET_MAX} or fewer, or choose a set menu or Floating Apps.`);
   }
   if (!fi || fi.retired) errs.push('Choose a food option.');
+  else if (fi.id.startsWith('set-l-') && !lunchMenusOK(sel.time)) errs.push('Lunch menus are for parties starting before 3:00 pm. Please choose a dinner menu or another option.');
   else if (g) {
     if (fi.id === 'menu' && menuBlocked(g)) errs.push('Parties of more than 25 choose a set menu or a buffet.');
     if (fi.buffet && g < 12) errs.push('Buffets and appetizer parties need at least 12 guests.');
