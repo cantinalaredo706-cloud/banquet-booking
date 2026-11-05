@@ -266,6 +266,9 @@ export function makeAvail(slots, now = Date.now()) {
 }
 
 /* ---------- Menus and the estimate ---------- */
+/* Parties of more than 25 can't order from the regular menu; they choose a set menu or a buffet. */
+export const MENU_MAX_GUESTS = 25;
+export const menuBlocked = guests => (parseInt(guests, 10) || 0) > MENU_MAX_GUESTS;
 export function foodInfo(id) {
   if (!id) return null; if (id === 'menu') return { id, name: 'Order from our menu at the event', price: null };
   if (id.startsWith('set-')) {
@@ -317,7 +320,7 @@ export function validateDetails(space, sel, f) {
   }
   if (!fi || fi.retired) errs.push('Choose a food option.');
   else if (g) {
-    if (fi.id === 'menu' && g >= 25) errs.push('Parties of 25 or more choose a set menu or a buffet.');
+    if (fi.id === 'menu' && menuBlocked(g)) errs.push('Parties of more than 25 choose a set menu or a buffet.');
     if (fi.buffet && g < 12) errs.push('Buffets and appetizer parties need at least 12 guests.');
   }
   if (fi && fi.brunch && sel.date) { const day = space === 'pdr' ? sel.block === 'lunch' : sel.time < 15 * 60; if (!(isSatSun(sel.date) && day)) errs.push('Brunch is only offered Saturdays and Sundays, 10 am–3 pm.') }

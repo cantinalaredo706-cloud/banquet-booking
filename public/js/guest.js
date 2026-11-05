@@ -64,7 +64,7 @@ function stepBrowse() {
       <p class="small muted">Fee applies within 24 hours of the event, or if the party hasn't arrived 30 minutes after its time.</p>
       <div class="spacer"></div><button type="button" class="btn ghost small" data-action="pickspace" data-s="bar">Check Bar dates</button></article></div>
     <p class="small muted">Parties of 10 or fewer in the Dining Room or Bar: please use our regular reservations. A 22% gratuity and 6.5% sales tax are added to every party's check.</p>`;
-  if (t === 'set') body = `<p class="muted">Parties of 25 or more choose a set menu. Prices are per guest, before tax and gratuity.</p>
+  if (t === 'set') body = `<p class="muted">Parties of more than 25 choose a set menu or a buffet. Prices are per guest, before tax and gratuity.</p>
     <div><span class="eyebrow">Lunch menus</span></div>
     <div class="grid">${LUNCH_SET.map(p => `<article class="card offer"><div class="price">${money0(p)} <small>per guest</small></div>${menuDetail(R.LUNCH_MENUS[p])}</article>`).join('')}</div>
     <div><span class="eyebrow">Dinner menus</span> <span class="small muted">· available for lunch parties too</span></div>
@@ -125,8 +125,8 @@ function stepDetails() {
     ${inp('phone', 'Phone', 'tel', 'autocomplete="tel" maxlength="40"')}${inp('org', 'Company or organization <span class="hint">Optional</span>', 'text', 'maxlength="160"')}
     <label class="f">Type of event<select id="f-type" data-f="type">${R.EVENT_TYPES.map(o => `<option ${f.type === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>
     <label class="f">Number of guests <span class="hint">${sp.id === 'pdr' ? 'Up to 40' : sp.id === 'dr' ? '11 to 100' : '11 or more'}</span><input type="number" id="f-guests" data-f="guests" min="${sp.minG}" ${sp.maxG ? `max="${sp.maxG}"` : ''} value="${esc(f.guests)}" inputmode="numeric"></label>
-    <fieldset class="full"><legend>Food <span class="hint muted" style="font-weight:400">· parties of 25+ choose a set menu or buffet</span></legend>
-      ${radio('menu', 'Order from our menu at the event', '<span class="small muted">Under 25 guests only. No estimate.</span>')}
+    <fieldset class="full"><legend>Food <span class="hint muted" style="font-weight:400">· parties of more than 25 choose a set menu or buffet</span></legend>
+      ${radio('menu', 'Order from our menu at the event', '<span class="small muted" id="menuNote">25 guests or fewer. No estimate.</span>', R.menuBlocked(f.guests))}
       <div><span class="eyebrow">Set menus · per guest</span></div>
       <div class="setrow"><span class="small muted">Lunch</span><div class="chips">${LUNCH_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-l-${p}" data-f="food" value="set-l-${p}" ${f.food === 'set-l-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
       <div class="setrow"><span class="small muted">Dinner</span><div class="chips">${DINNER_SET.map(p => `<label class="chip"><input type="radio" name="food" id="fd-set-d-${p}" data-f="food" value="set-d-${p}" ${f.food === 'set-d-' + p ? 'checked' : ''}><span>${money0(p)}</span></label>`).join('')}</div></div>
@@ -168,6 +168,13 @@ function syncDetailsUI() {
   const f = S.form, fi = R.foodInfo(f.food);
   document.querySelectorAll('.sub[data-for]').forEach(el => el.hidden = el.dataset.for !== f.bar);
   const br = document.getElementById('brunchAddRow'); if (br) br.hidden = f.food !== 'brunch';
+  const mr = document.getElementById('fd-menu');
+  if (mr) {
+    const blocked = R.menuBlocked(f.guests);
+    mr.disabled = blocked; mr.closest('.choice').classList.toggle('dis', blocked);
+    const note = document.getElementById('menuNote'); if (note) note.textContent = blocked ? 'Not available for more than 25 guests. Please choose a set menu or a buffet.' : '25 guests or fewer. No estimate.';
+    if (blocked && f.food === 'menu') { f.food = ''; mr.checked = false; updateSummary() }
+  }
   const mp = document.getElementById('menuPick'); if (mp) { const html = pickedMenu(f.food); mp.innerHTML = html; mp.hidden = !html }
   const one = fi && fi.oneCheck; ['2', '3'].forEach(n => { const el = document.getElementById('ck-' + n); if (el) el.disabled = !!one });
   if (one && f.checks !== '1') { f.checks = '1'; const c = document.getElementById('ck-1'); if (c) c.checked = true }
@@ -177,7 +184,7 @@ function syncDetailsUI() {
 function contractHtml() {
   const o = cur(), e = R.estimate(o), g = e.g;
   const head = `<dl class="kv"><dt>Reservation name</dt><dd>${esc(o.name)}${o.org ? ', ' + esc(o.org) : ''}</dd><dt>Contact</dt><dd>${esc(o.phone)} · ${esc(o.email)}</dd><dt>Event</dt><dd>${esc(o.type)}</dd><dt>When</dt><dd>${esc(R.whenText(o))}</dd><dt>Guests</dt><dd>${g}</dd><dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}</dd><dt>Bar</dt><dd>${esc(R.barText(o))}</dd><dt>Bill paid with</dt><dd>${o.checks} check${o.checks > 1 ? 's' : ''}</dd>${o.tv && S.space === 'pdr' ? '<dt>TV with HDMI</dt><dd>Yes, $75</dd>' : ''}</dl>`;
-  const common = `<li>Parties of 25 or more choose a set menu, and the bill is paid on a <u>maximum</u> of 3 checks.</li><li>In the event of a buffet or appetizer party, all food must be paid for on one check.</li><li>If any guests have food allergies, please tell us so we can accommodate them.</li>`;
+  const common = `<li>Parties of more than 25 choose a set menu or a buffet. The bill is paid on a <u>maximum</u> of 3 checks.</li><li>In the event of a buffet or appetizer party, all food must be paid for on one check.</li><li>If any guests have food allergies, please tell us so we can accommodate them.</li>`;
   if (S.space === 'pdr') {
     const pt = R.pdrTerms(o.date, o.block);
     return `<h4>Private Party Agreement</h4>${head}<h4>Policies</h4><ol>
@@ -278,7 +285,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('input', e => {
   const el = e.target;
-  if (el.dataset.f && el.type !== 'radio') { S.form[el.dataset.f] = el.value; if (['guests', 'platS', 'platL'].includes(el.dataset.f)) updateSummary(); return }
+  if (el.dataset.f && el.type !== 'radio') { S.form[el.dataset.f] = el.value; if (el.dataset.f === 'guests') syncDetailsUI(); if (['guests', 'platS', 'platL'].includes(el.dataset.f)) updateSummary(); return }
   if (el.dataset.f2 === 'sig') { S.sig = el.value; return }
 });
 document.addEventListener('change', e => {
