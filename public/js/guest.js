@@ -181,40 +181,7 @@ function syncDetailsUI() {
   const note = document.getElementById('checksNote'); if (note) note.textContent = one ? 'Buffet or appetizer party: all food is paid on one check.' : 'Maximum of 3 checks. Buffet or appetizer parties pay all food on one check.';
 }
 
-function contractHtml() {
-  const o = cur(), e = R.estimate(o), g = e.g;
-  const head = `<dl class="kv"><dt>Reservation name</dt><dd>${esc(o.name)}${o.org ? ', ' + esc(o.org) : ''}</dd><dt>Contact</dt><dd>${esc(o.phone)} · ${esc(o.email)}</dd><dt>Event</dt><dd>${esc(o.type)}</dd><dt>When</dt><dd>${esc(R.whenText(o))}</dd><dt>Guests</dt><dd>${g}</dd><dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}</dd><dt>Bar</dt><dd>${esc(R.barText(o))}</dd><dt>Bill paid with</dt><dd>${o.checks} check${o.checks > 1 ? 's' : ''}</dd>${o.tv && S.space === 'pdr' ? '<dt>TV with HDMI</dt><dd>Yes, $75</dd>' : ''}</dl>`;
-  const common = `<li>Parties of more than 25 choose a set menu or a buffet. The bill is paid on a <u>maximum</u> of 3 checks.</li><li>In the event of a buffet or appetizer party, all food must be paid for on one check.</li><li>If any guests have food allergies, please tell us so we can accommodate them.</li>`;
-  if (S.space === 'pdr') {
-    const pt = R.pdrTerms(o.date, o.block);
-    return `<h4>Private Party Agreement</h4>${head}<h4>Policies</h4><ol>
-    <li>We do not charge room rental fees. We require a food &amp; beverage minimum. The minimum charge on the final guest check for your event, before tax and gratuity, is <b>${money0(pt.min)}</b>.</li>
-    <li>The credit card on file secures the room for your event. It is not charged at booking.</li>
-    <li><b>Cancellation:</b> Due to staffing requirements, your card <b>will be charged ${money0(pt.fee)}</b> if you cancel less than 72 hours before the scheduled event. The cancellation fee is only charged if the reservation is cancelled within that time frame.</li>
-    <li>A final guest count must be received no later than 2 days before the party.</li>${common}
-    <li>Applicable sales tax and a 22% banquet gratuity will be added to your check(s).</li>
-    <li>Use of confetti or confetti poppers is prohibited. A $100 cleaning fee will be charged if any are used.</li>
-    ${o.block === 'lunch' && o.ext ? '<li>Your request to keep the room until 4:00 pm is subject to manager approval.</li>' : ''}</ol>
-    <p>Your signature indicates acceptance of the material contained herein and of the Banquet Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`
-  }
-  if (S.space === 'dr') return `<h4>Dining Room Party Agreement</h4>${head}<h4>Policies</h4><ol>
-    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking.</li>
-    <li>We will hold your table for 30 minutes past your reservation time. After that, it is considered a no-show and the cancellation fee is charged.</li>
-    <li><b>Cancellation:</b> cancellations made less than 12 hours before the event are charged the cancellation fee for your party size: 9–15 guests $200, 16–25 guests $250, over 25 guests $300. Your fee: <b>${money0(R.drFee(g))}</b>.</li>
-    <li>A final guest count must be received no later than 2 days before the party.</li>${common}
-    <li>You may pre-select wines, beers and spirits, or we can run a cash bar.</li>
-    <li>Applicable sales tax and a 22% event gratuity will be added to your check(s).</li>
-    <li>Use of confetti or confetti poppers is prohibited. A $100 cleaning fee will be charged if any are used.</li></ol>
-    <p>Your signature indicates acceptance of the material contained herein and of the Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`;
-  return `<h4>Bar Party Agreement</h4>${head}<h4>Policies</h4><ol>
-    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking.</li>
-    <li>We will hold your table for 30 minutes past your reservation time. After that, it is considered a cancellation/no-show and the cancellation fee is charged.</li>
-    <li><b>Cancellation:</b> cancellations made less than 24 hours before the event are charged the cancellation fee for your party size: 9–15 guests $150, 16–25 guests $200, over 25 guests $250. Your fee: <b>${money0(R.barFee(g))}</b>.</li>
-    <li>A final guest count must be received no later than 2 days before the party.</li>${common}
-    <li>You may pre-select wines, beers and spirits, or we can run a cash bar.</li>
-    <li>Applicable sales tax and a 22% event gratuity will be added to your check(s).</li></ol>
-    <p>Your signature indicates acceptance of the material contained herein and of the Bar Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`
-}
+function contractHtml() { return R.agreementHtml(cur()) }
 function stepContract() {
   return `<div class="panel-head"><span class="eyebrow">Step 4</span><h2>Review and sign</h2><p class="muted">Read the agreement, then type your full name to sign it.</p></div><div id="form-errors"></div>
   <div class="card" style="display:flex;flex-direction:column;gap:16px"><div class="contract" tabindex="0">${contractHtml()}</div>
