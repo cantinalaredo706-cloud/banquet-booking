@@ -406,6 +406,7 @@ export function cardText(c) {
   return `${base} (saved in Square${c.squareEnv === 'sandbox' ? ' TEST mode' : ''}, not charged)`;
 }
 export const SQUARE_HOWTO = 'To charge a cancellation or no-show fee, enter the fee in Square (Virtual Terminal or the Square Point of Sale app), choose Card on file, and pick this guest. The card is only for the fee, never for the party bill.';
+export const DRINKS_NOTE = 'Set menu prices are for food only. They do not include drinks, non-alcoholic or alcoholic.';
 export const BRING_CARD = 'Please note: the card on file is only for the cancellation or no-show fee. It cannot be used to pay for your party, so please bring a physical credit card or other payment to pay your bill at the restaurant.';
 export function inquiryEmail(b) {
   const e = estimate(b), sp = SPACES[b.space];

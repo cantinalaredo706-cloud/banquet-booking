@@ -283,3 +283,5 @@ input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:
 .bring b{color:var(--gold)}
 .error-text{color:var(--chile);font-weight:600}
 .pill.sq{background:var(--accent-soft);color:var(--accent);font-size:.68rem}
+.drinks-note{background:var(--gold-soft);border-radius:8px;padding:10px 12px;font-size:.92rem;margin:0}
+.drinks-note b{color:var(--gold)}

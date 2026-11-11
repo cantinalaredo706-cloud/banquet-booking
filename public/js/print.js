@@ -11,6 +11,7 @@ const row = (k, v) => v ? `<div class="pair"><dt>${k}</dt><dd>${v}</dd></div>` :
 function menuBlock(m) {
   if (!m) return '';
   return `<div class="menu"><p><b>${esc(m.appsLabel || 'Appetizers')}:</b> ${m.apps.map(esc).join(' · ')}</p>
+    <p class="muted small">Food only; drinks (non-alcoholic and alcoholic) are not included.</p>
     <p><b>Entrées (guest choice):</b></p><ul>${m.entrees.map(x => `<li><b>${esc(x.name)}</b> — ${esc(x.desc)}</li>`).join('')}</ul>
     ${m.desserts ? `<p><b>Postres:</b> ${esc(m.desserts)}</p>` : ''}</div>`;
 }
@@ -53,7 +54,7 @@ function render(b) {
     ${e.short ? `<tr><th>To reach the ${money0(e.pt.min)} minimum</th><td>${money(e.short)}</td></tr>` : ''}
     <tr><th>Gratuity 22%</th><td>${money(e.grat)}</td></tr><tr><th>Sales tax 6.5%</th><td>${money(e.tax)}</td></tr>${e.tv ? `<tr><th>TV with HDMI</th><td>${money(e.tv)}</td></tr>` : ''}
     <tr class="total"><th>Estimated total</th><td>${money(e.total)}</td></tr></table>
-    <p class="muted small">Bar charges, if any, are added from what guests order. The final bill is based on the final guest count.</p></section>` : ''}</div>
+    <p class="muted small">${e.f && e.f.set ? 'Set menu prices are food only; drinks are not included. ' : ''}Bar charges, if any, are added from what guests order. The final bill is based on the final guest count.</p></section>` : ''}</div>
 
   <section class="agreement">${R.agreementHtml(o)}</section>
 

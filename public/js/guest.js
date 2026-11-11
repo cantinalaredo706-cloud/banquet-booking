@@ -121,10 +121,11 @@ function stepMenus() {
   const lunchOK = R.lunchMenusOK(S.sel.time); // lunch menus only for parties starting before 3:00 pm
   if (!lunchOK && f.food.startsWith('set-l-')) f.food = ''; // a later start time was picked after choosing a lunch menu
   const radio = (id, label, sub, dis) => `<label class="choice ${dis ? 'dis' : ''}"><input type="radio" name="food" id="fd-${id}" data-f="food" value="${id}" ${f.food === id ? 'checked' : ''} ${dis ? 'disabled' : ''}><span><b>${label}</b>${sub}</span></label>`;
-  const menuCard = (k, p, m) => `<label class="card menucard"><span class="mc-head"><input type="radio" name="food" id="fd-set-${k}-${p}" data-f="food" value="set-${k}-${p}" ${f.food === `set-${k}-${p}` ? 'checked' : ''}><span class="price">${money0(p)} <small>per guest</small></span></span>${menuDetail(m)}</label>`;
+  const menuCard = (k, p, m) => `<label class="card menucard"><span class="mc-head"><input type="radio" name="food" id="fd-set-${k}-${p}" data-f="food" value="set-${k}-${p}" ${f.food === `set-${k}-${p}` ? 'checked' : ''}><span class="price">${money0(p)} <small>per guest · food only</small></span></span>${menuDetail(m)}</label>`;
   return `<div class="panel-head"><span class="eyebrow">Step 3</span><h2>Menus</h2><p class="muted">${esc(R.whenText(Object.assign({ space: S.space }, S.sel)))} · ${g} guests. Choose one food option and how you'd like to handle the bar.</p></div><div id="form-errors"></div>
   <div class="card"><fieldset class="full menus"><legend>Food <span class="hint muted" style="font-weight:400">· parties of more than 25 choose a set menu or buffet</span></legend>
     ${radio('menu', 'Order from our menu at the event', '<span class="small muted" id="menuNote">25 guests or fewer. No estimate.</span>', R.menuBlocked(f.guests))}
+    <p class="drinks-note"><b>Set menu prices are for food only.</b> They do not include drinks, non-alcoholic or alcoholic.</p>
     ${lunchOK ? `<div><span class="eyebrow">Lunch set menus · per guest</span></div><div class="grid">${LUNCH_SET.map(p => menuCard('l', p, R.LUNCH_MENUS[p])).join('')}</div>` : ''}
     <div><span class="eyebrow">Dinner set menus · per guest</span></div>
     <div class="grid">${DINNER_SET.map(p => menuCard('d', p, R.DINNER_MENUS[p])).join('')}</div>
@@ -234,7 +235,7 @@ function summary() {
       ${e.short ? `<dt>To reach ${money0(e.pt.min)} minimum</dt><dd>${money(e.short)}</dd>` : ''}
       <dt>Gratuity 22%</dt><dd>${money(e.grat)}</dd><dt>Sales tax 6.5%</dt><dd>${money(e.tax)}</dd>${e.tv ? `<dt>TV with HDMI</dt><dd>${money(e.tv)}</dd>` : ''}
       <div class="total" style="display:contents"><dt>Estimated total</dt><dd>${money(e.total)}</dd></div></dl>
-      <p class="muted small" style="margin-top:8px">${o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
+      <p class="muted small" style="margin-top:8px">${e.f && e.f.set ? 'Set menu prices are food only; drinks are not included. ' : ''}${o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
       : e.f && e.f.id === 'menu' ? `<p class="muted small">Guests order from the menu at the event, so there's no estimate.${e.pt ? ` Your check must reach ${money0(e.pt.min)} before tax and gratuity.` : ''}</p>` : ''}</div></div>`
 }
 const updateSummary = () => { const el = document.getElementById('summary'); if (el) el.innerHTML = summary() };
