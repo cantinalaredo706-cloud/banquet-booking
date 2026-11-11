@@ -1,5 +1,5 @@
 /* Printable booking copy. A light page on screen; plain black on white when printed (Letter, one sheet where possible). */
-:root{--ink:#1B2320;--muted:#5A6660;--line:#C9D0C7;--accent:#1D5C52;--bg:#EEF1EC;--paper:#FFFFFF;
+:root{--ink:#1C1918;--muted:#655D59;--line:#DDD6D1;--accent:#B63E36;--bg:#F1EDEA;--paper:#FFFFFF;
   --f-display:"Young Serif",Georgia,"Times New Roman",serif;--f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
@@ -11,7 +11,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);fo
 .tb-btn:focus-visible,.tb-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sheet{background:var(--paper);max-width:8.5in;margin:20px auto 48px;padding:.6in .65in;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:16px}
 @media (max-width:700px){.sheet{margin:0;padding:20px 16px;box-shadow:none}}
-.head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--accent);padding-bottom:10px}
 .brand{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
 h1{font-family:var(--f-display);font-weight:400;font-size:1.7rem;margin:2px 0 0;line-height:1.15}
 .meta{text-align:right;font-size:.85rem;display:flex;flex-direction:column;gap:2px}
@@ -56,3 +56,5 @@ h2{font-family:var(--f-display);font-weight:400;font-size:1.1rem;margin:0 0 6px}
   .sheet{max-width:none;margin:0;padding:0;box-shadow:none;gap:6px}
   .status.held,.status.confirmed,.status.declined{color:#000}
 }
+.headl{display:flex;align-items:center;gap:14px}.plogo{height:54px;width:auto}
+@media print{.plogo{height:44px}}

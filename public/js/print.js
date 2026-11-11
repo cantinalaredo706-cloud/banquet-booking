@@ -31,7 +31,7 @@ function render(b) {
        <div class="lines"><div><span>Guest signature</span></div><div><span>Date</span></div></div>`;
   sheet.innerHTML = `
   <header class="head">
-    <div><div class="brand">${esc(R.BRAND)} · ${esc(R.LOCATION)}</div><h1>${esc(sp.name)} booking</h1></div>
+    <div class="headl"><img class="plogo" src="/img/logo.jpg" alt="Cantina Laredo"><div><div class="brand">${esc(R.BRAND)} · ${esc(R.LOCATION)}</div><h1>${esc(sp.name)} booking</h1></div></div>
     <div class="meta"><div>Booking <b>#${b.id}</b></div><div class="status ${b.cancelled ? 'declined' : b.status}">${esc(status)}</div><div class="muted">Printed ${esc(R.fmtStamp(Date.now()))}</div></div>
   </header>
 

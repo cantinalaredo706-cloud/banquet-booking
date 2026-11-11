@@ -1,26 +1,29 @@
-/* Site styles (from the approved prototype). */
+/* Site styles. Colors follow the Cantina Laredo logo: brick red (#B63E36), black and white (option C). */
 html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}
 /* Layout: guest booking flow (stepper + main panel) beside a sticky "Your event" ticket; manager view swaps in an inbox + approvals desk. */
 :root{
-  --bg:#F4F6F2; --surface:#FFFFFF; --sunk:#EBEEE8; --ink:#1B2320; --muted:#5A6660; --line:#D6DCD4;
-  --accent:#1D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE5;
-  --chile:#A3372A; --chile-soft:#F6E2DD;
-  --gold:#8E620F; --gold-soft:#F4E9D2;
+  --bg:#FAF8F6; --surface:#FFFFFF; --sunk:#F1EDEA; --ink:#1C1918; --muted:#655D59; --line:#E0DAD5;
+  --accent:#1C1918; --accent-ink:#FFFFFF; --accent-soft:#F3E4E1;
+  --brand:#B63E36; --brand-ink:#FFFFFF;
+  --chile:#8F2A23; --chile-soft:#F7E1DE;
+  --gold:#8A6212; --gold-soft:#F4EAD6;
   --ok:#2C7549; --ok-soft:#DDEFE3;
-  --off:#C8CEC6;
+  --off:#D2CBC6;
   --f-display:"Young Serif", Georgia, "Times New Roman", serif;
   --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#111714; --surface:#19211D; --sunk:#0D1210; --ink:#E6ECE8; --muted:#9AA7A0; --line:#2B3530;
-  --accent:#62B5A5; --accent-ink:#0A1613; --accent-soft:#1C3933;
-  --chile:#E48572; --chile-soft:#3A211C; --gold:#DCB062; --gold-soft:#372D17; --ok:#6DC28D; --ok-soft:#1B3325; --off:#37413C;
+  --bg:#141110; --surface:#1D1918; --sunk:#100D0C; --ink:#EFE9E6; --muted:#A99F9A; --line:#352E2B;
+  --accent:#EFE9E6; --accent-ink:#141110; --accent-soft:#3A2522;
+  --brand:#A9382F; --brand-ink:#FFFFFF;
+  --chile:#EE8F83; --chile-soft:#3D201C; --gold:#DCB062; --gold-soft:#372D17; --ok:#6DC28D; --ok-soft:#1B3325; --off:#3C3431;
   color-scheme:dark } }
 :root[data-theme="dark"]{
-  --bg:#111714; --surface:#19211D; --sunk:#0D1210; --ink:#E6ECE8; --muted:#9AA7A0; --line:#2B3530;
-  --accent:#62B5A5; --accent-ink:#0A1613; --accent-soft:#1C3933;
-  --chile:#E48572; --chile-soft:#3A211C; --gold:#DCB062; --gold-soft:#372D17; --ok:#6DC28D; --ok-soft:#1B3325; --off:#37413C;
+  --bg:#141110; --surface:#1D1918; --sunk:#100D0C; --ink:#EFE9E6; --muted:#A99F9A; --line:#352E2B;
+  --accent:#EFE9E6; --accent-ink:#141110; --accent-soft:#3A2522;
+  --brand:#A9382F; --brand-ink:#FFFFFF;
+  --chile:#EE8F83; --chile-soft:#3D201C; --gold:#DCB062; --gold-soft:#372D17; --ok:#6DC28D; --ok-soft:#1B3325; --off:#3C3431;
   color-scheme:dark }
 
 *{box-sizing:border-box}
@@ -36,9 +39,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Header */
-.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top{background:var(--brand);color:var(--brand-ink)}
+.top .eyebrow{color:var(--brand-ink);opacity:.85}
+.top .logo{height:52px;width:auto;background:#fff;border-radius:6px;padding:4px}
+.top .who{color:var(--brand-ink);opacity:.9}
+.top .btn.ghost{color:var(--brand-ink);border-color:rgba(255,255,255,.6)}
+.top .btn.ghost:hover{background:rgba(255,255,255,.12)}
+.top :focus-visible{outline-color:#fff}
 .top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:14px}
-.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0}
 .brand h1{font-size:1.45rem}
 .proto{display:inline-flex;align-items:center;gap:6px;background:var(--gold-soft);color:var(--gold);font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:99px}
 .seg{display:inline-flex;background:var(--sunk);border-radius:8px;padding:3px;gap:2px}
@@ -59,7 +68,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stepper .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);font-size:.75rem;font-weight:700}
 .stepper .done .n{background:var(--accent-soft);color:var(--accent)}
 .stepper .cur{border-color:var(--accent);color:var(--ink);font-weight:600}
-.stepper .cur .n{background:var(--accent);color:var(--accent-ink)}
+.stepper .cur .n{background:var(--brand);color:var(--brand-ink)}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
 .panel-head{display:flex;flex-direction:column;gap:6px}
@@ -161,7 +170,7 @@ legend{font-size:.85rem;font-weight:600;margin-bottom:6px}
 
 /* Summary ticket */
 .ticket{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.ticket .th{background:var(--accent);color:var(--accent-ink);padding:14px 18px}
+.ticket .th{background:var(--brand);color:var(--brand-ink);padding:14px 18px}
 .ticket .th h3{font-size:1.2rem}
 .ticket .tb{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:.88rem}
@@ -269,7 +278,7 @@ input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:
 .menus{gap:12px}
 .menucard{display:flex;flex-direction:column;gap:8px;cursor:pointer;padding:14px 16px}
 .menucard:hover{border-color:var(--accent)}
-.menucard:has(input:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.menucard:has(input:checked){border-color:var(--brand);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--brand)}
 .menucard:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 .mc-head{display:flex;align-items:center;gap:10px}
 .mc-head input{width:18px;height:18px;accent-color:var(--accent);flex:none}
