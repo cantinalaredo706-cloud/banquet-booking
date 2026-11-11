@@ -125,14 +125,14 @@ function stepMenus() {
   return `<div class="panel-head"><span class="eyebrow">Step 3</span><h2>Menus</h2><p class="muted">${esc(R.whenText(Object.assign({ space: S.space }, S.sel)))} · ${g} guests. Choose one food option and how you'd like to handle the bar.</p></div><div id="form-errors"></div>
   <div class="card"><fieldset class="full menus"><legend>Food <span class="hint muted" style="font-weight:400">· parties of more than 25 choose a set menu or buffet</span></legend>
     ${radio('menu', 'Order from our menu at the event', '<span class="small muted" id="menuNote">25 guests or fewer. No estimate.</span>', R.menuBlocked(f.guests))}
-    <p class="drinks-note"><b>Set menu prices are for food only.</b> They do not include drinks, non-alcoholic or alcoholic.</p>
+    <p class="drinks-note"><b>Set menu, buffet and appetizer prices are for food only.</b> They do not include drinks, non-alcoholic or alcoholic. The Brunch Buffet includes one complimentary Bloody Mary or Mimosa per guest 21+.</p>
     ${lunchOK ? `<div><span class="eyebrow">Lunch set menus · per guest</span></div><div class="grid">${LUNCH_SET.map(p => menuCard('l', p, R.LUNCH_MENUS[p])).join('')}</div>` : ''}
     <div><span class="eyebrow">Dinner set menus · per guest</span></div>
     <div class="grid">${DINNER_SET.map(p => menuCard('d', p, R.DINNER_MENUS[p])).join('')}</div>
     <div><span class="eyebrow">Buffets & appetizers · 12 guest minimum · one check</span>${S.space === 'pdr' ? ' <span class="small muted">· a buffet in the Private Dining Room allows up to 32 guests</span>' : ''}</div>
-    <div class="choices">${BUFFETS.map(b => radio(b.id, b.name, `<span class="mono">${money(b.price)}</span>/guest<br><span class="small muted">${esc(b.desc)}</span>${b.brunch && !brunchOK ? '<br><span class="small">Sat & Sun, 10 am–3 pm only</span>' : ''}`, b.brunch && !brunchOK)).join('')}</div>
+    <div class="choices">${BUFFETS.map(b => radio(b.id, b.name, `<span class="mono">${money(b.price)}</span>/guest${b.brunch ? ' · includes one Bloody Mary or Mimosa (21+)' : ' · food only'}<br><span class="small muted">${esc(b.desc)}</span>${b.brunch && !brunchOK ? '<br><span class="small">Sat & Sun, 10 am–3 pm only</span>' : ''}`, b.brunch && !brunchOK)).join('')}</div>
     <label class="check" id="brunchAddRow" ${f.food === 'brunch' ? '' : 'hidden'}><input type="checkbox" id="f-brunchAdd" data-fc="brunchAdd" ${f.brunchAdd ? 'checked' : ''}><span>Add coffee, tea and orange juice ($2 per guest)</span></label>
-    <div class="inline"><span class="small"><b>Appetizer platters</b> (optional) · chef's choice</span><label class="small">Small, feeds 12–15 ($75) <input type="number" min="0" max="10" id="f-platS" data-f="platS" value="${esc(f.platS)}"></label><label class="small">Large, feeds 18–21 ($95) <input type="number" min="0" max="10" id="f-platL" data-f="platL" value="${esc(f.platL)}"></label></div>
+    <div class="inline"><span class="small"><b>Appetizer platters</b> (optional) · chef's choice · food only</span><label class="small">Small, feeds 12–15 ($75) <input type="number" min="0" max="10" id="f-platS" data-f="platS" value="${esc(f.platS)}"></label><label class="small">Large, feeds 18–21 ($95) <input type="number" min="0" max="10" id="f-platL" data-f="platL" value="${esc(f.platL)}"></label></div>
   </fieldset></div>
   <div class="card"><fieldset class="full"><legend>Bar</legend>
     ${BAROPTS.map(b => `<div><label class="choice"><input type="radio" name="bar" id="br-${b.id}" data-f="bar" value="${b.id}" ${f.bar === b.id ? 'checked' : ''}><span><b>${b.name}</b>${b.desc}</span></label>${barSub(b.id)}</div>`).join('')}
@@ -235,7 +235,7 @@ function summary() {
       ${e.short ? `<dt>To reach ${money0(e.pt.min)} minimum</dt><dd>${money(e.short)}</dd>` : ''}
       <dt>Gratuity 22%</dt><dd>${money(e.grat)}</dd><dt>Sales tax 6.5%</dt><dd>${money(e.tax)}</dd>${e.tv ? `<dt>TV with HDMI</dt><dd>${money(e.tv)}</dd>` : ''}
       <div class="total" style="display:contents"><dt>Estimated total</dt><dd>${money(e.total)}</dd></div></dl>
-      <p class="muted small" style="margin-top:8px">${e.f && e.f.set ? 'Set menu prices are food only; drinks are not included. ' : ''}${o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
+      <p class="muted small" style="margin-top:8px">${R.foodOnly(e.f) || e.plat ? 'Food prices don\'t include drinks. ' : ''}${o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
       : e.f && e.f.id === 'menu' ? `<p class="muted small">Guests order from the menu at the event, so there's no estimate.${e.pt ? ` Your check must reach ${money0(e.pt.min)} before tax and gratuity.` : ''}</p>` : ''}</div></div>`
 }
 const updateSummary = () => { const el = document.getElementById('summary'); if (el) el.innerHTML = summary() };
