@@ -40,6 +40,7 @@ function render(b) {
     ${row('Type of event', esc(b.type))}${row('Guests', String(b.guests))}
     ${row('Food', food)}${row('Appetizer platters', platters)}${row('Bar', esc(R.barText(o)))}
     ${row('Bill paid with', `${o.checks} check${o.checks > 1 ? 's' : ''}`)}${b.space === 'pdr' ? row('TV with HDMI', b.tv ? 'Yes, $75' : 'No') : ''}
+    ${row('Card on file', b.card ? esc(R.cardText(b.card)) : (b.manual ? 'Not taken online' : 'Not on file yet'))}
     ${row('Cancellation fee', esc(R.cancelText(o)))}${e.pt ? row('Food &amp; beverage minimum', money0(e.pt.min) + ' before tax and gratuity') : ''}
   </dl></section>
 

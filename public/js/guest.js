@@ -6,7 +6,7 @@ document.getElementById('brand-line').textContent = `${R.BRAND} · ${R.LOCATION}
 document.title = `Parties & Private Events · ${R.BRAND}`;
 
 /* ---------- state ---------- */
-let A = R.makeAvail([]), loaded = false;
+let A = R.makeAvail([]), loaded = false, SQ = false; // SQ: Square settings when the card step is on
 const today = () => R.todayLocal();
 const firstMonth = () => { const t = today(); return { y: +t.slice(0, 4), m: +t.slice(5, 7) - 1 } };
 const S = {
@@ -26,7 +26,7 @@ async function api(path, body) {
   return j;
 }
 async function loadAvail() {
-  try { const j = await api('/api/availability'); A = R.makeAvail(j.slots); loaded = true }
+  try { const j = await api('/api/availability'); A = R.makeAvail(j.slots); SQ = j.card || false; loaded = true }
   catch (e) { loaded = 'error'; toast(e.message) }
   render();
 }
@@ -50,10 +50,11 @@ function render() {
   }).join('')}</ol>`;
   document.getElementById('app').innerHTML = `<div class="layout"><section class="main">${st}${[0, stepSpaces, stepDate, stepMenus, stepDetails, stepContract, stepSubmit, stepDone][S.step]()}</section><aside class="summary" id="summary">${summary()}</aside></div>`;
   if (S.step === 3 || S.step === 4) syncDetailsUI();
+  if (S.step === 6 && SQ) mountCard();
 }
 
 function stepSpaces() {
-  return `<div class="panel-head"><span class="eyebrow">Step 1</span><h2>Spaces</h2><p class="muted">We don't charge rental fees. A credit card on file holds your space and is not charged unless you cancel late or don't show.</p></div>
+  return `<div class="panel-head"><span class="eyebrow">Step 1</span><h2>Spaces</h2><p class="muted">We don't charge rental fees. A credit card on file holds your space and is not charged unless you cancel late or don't show. It isn't used to pay for your party, so bring a card or other payment to the restaurant.</p></div>
     ${`<div class="grid">
     <article class="card offer"><h3>Private Dining Room</h3><p class="muted">${SPACES.pdr.desc}</p>
       <div class="tablewrap"><table class="up prices"><tbody><tr><td></td><td><b>Minimum</b></td><td><b>Cancel fee</b></td></tr>
@@ -193,24 +194,33 @@ function stepContract() {
 }
 function stepSubmit() {
   const o = cur();
+  const bring = `<p class="bring"><b>This card can't be used to pay for your party.</b> Please bring a physical credit card or other payment to pay your bill at the restaurant.</p>`;
+  const holdCard = SQ
+    ? `<div class="secure"><div class="shead">🔒 Hold your space with a card · secured by Square</div>
+        <p>Your card is saved by Square, our payment processor. It is <b>not charged</b> now. It is only charged the cancellation fee (${esc(R.cancelText(o))}) if you cancel late or don't show.</p>${bring}
+        <label class="f">Name on card<input type="text" id="c-holder" value="${esc(S.cardHolder ?? S.form.name)}" autocomplete="cc-name" maxlength="96"></label>
+        <div id="sq-card" class="sq-card"><p class="small muted">Loading the secure card form…</p></div>
+        ${SQ.env === 'sandbox' ? '<p class="small notice">Test mode: use Square\'s test card 4111 1111 1111 1111, any future date, any CVV and ZIP. Real cards won\'t work yet.</p>' : ''}</div>
+      <label class="check"><input type="checkbox" id="c-consent"><span>I authorize ${esc(R.BRAND)} ${esc(R.LOCATION)} to save this card with Square and to charge it only for a cancellation or no-show fee as described in the agreement. I understand it won't be used to pay my bill.</span></label>`
+    : `<div class="secure"><div class="shead">💳 Holding your space with a card</div>
+        <p>A manager will call you at <b>${esc(S.form.phone)}</b> to put a credit card on file. Your card is <b>not charged</b> at booking. It is only charged the cancellation fee (${esc(R.cancelText(o))}).</p>${bring}</div>
+      <label class="check"><input type="checkbox" id="c-ack"><span>I understand a credit card is required to hold my party, that it is charged only as described in the agreement, and that I need to bring a card or other payment for my bill.</span></label>`;
   return `<div class="panel-head"><span class="eyebrow">Step 6</span><h2>Send your booking</h2><p class="muted">${esc(R.whenText(o))}</p></div><div id="form-errors"></div>
-  <div class="card" style="display:flex;flex-direction:column;gap:14px">
-    <div class="secure"><div class="shead">💳 Holding your space with a card</div>
-      <p>A manager will call you at <b>${esc(S.form.phone)}</b> to put a credit card on file. Your card is <b>not charged</b> at booking. It is only charged the cancellation fee (${esc(R.cancelText(o))}).</p></div>
-    <label class="check"><input type="checkbox" id="c-ack"><span>I understand a credit card is required to hold my party, and that it is charged only as described in the agreement.</span></label></div>
-  <div class="actions"><button type="button" class="btn ghost" data-action="goto" data-n="5">← Back</button><button type="button" class="btn primary" data-action="submit" ${S.busy ? 'aria-busy="true" disabled' : ''}>${S.busy ? 'Sending…' : 'Submit booking'}</button></div>`
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">${holdCard}</div>
+  <div class="actions"><button type="button" class="btn ghost" data-action="goto" data-n="5">← Back</button><button type="button" class="btn primary" id="submitBtn" data-action="submit" ${S.busy ? 'aria-busy="true" disabled' : ''}>${S.busy ? 'Sending…' : 'Submit booking'}</button></div>`
 }
 function stepDone() {
   const b = S.done, st = b.status, sp = SPACES[b.space];
   return `<div class="card done-hero"><span class="stamp" style="${st === 'confirmed' ? 'background:var(--ok-soft);color:var(--ok)' : ''}">${st === 'confirmed' ? 'Confirmed' : 'Request received · on hold'}</span>
     <h2>${st === 'confirmed' ? 'Your party is booked.' : `Thanks, ${esc(b.name.split(' ')[0])}. Your space is on hold.`}</h2>
-    <p class="muted">${st === 'confirmed' ? 'A confirmation email is on its way.' : 'Our manager will review your request and confirm by email.'} We'll call you to put a card on file.</p></div>
+    <p class="muted">${st === 'confirmed' ? 'A confirmation email is on its way.' : 'Our manager will review your request and confirm by email.'} ${b.card ? `Your ${esc(b.card.brand)} ending ${esc(b.card.last4)} is saved with Square and was not charged.` : "We'll call you to put a card on file."} Please bring a card or other payment to pay your bill at the restaurant.</p></div>
   <div class="card"><h3 style="margin-bottom:12px">What happens next</h3><ul class="timeline">
     <li class="ok"><span class="m"></span><span>Agreement signed</span></li>
     <li class="${st === 'confirmed' ? 'ok' : 'wait'}"><span class="m"></span><span>${st === 'confirmed' ? 'Confirmed' : 'Manager confirms your booking'}</span></li>
-    <li class="wait"><span class="m"></span><span>Card on file by phone</span></li>
+    <li class="${b.card ? 'ok' : 'wait'}"><span class="m"></span><span>${b.card ? 'Card saved with Square (not charged)' : 'Card on file by phone'}</span></li>
     <li><span class="m"></span><span>Final guest count due ${sp.countDays === 1 ? '1 day' : '2 days'} before</span></li>
-    <li><span class="m"></span><span>Cancel by ${sp.cancelH} hours before to avoid the fee</span></li></ul></div>
+    <li><span class="m"></span><span>Cancel by ${sp.cancelH} hours before to avoid the fee</span></li>
+    <li><span class="m"></span><span>Bring a card or other payment for your bill</span></li></ul></div>
   <div class="actions"><span></span><button type="button" class="btn ghost" data-action="restart">Start another booking</button></div>`
 }
 function summary() {
@@ -290,16 +300,55 @@ function next() {
     go(6); return
   }
 }
-async function submit() {
-  if (!document.getElementById('c-ack').checked) return showErrors(['Check the box to confirm you understand how your space is held.']);
-  S.busy = true; render(); document.getElementById('c-ack').checked = true;
+/* ---------- Square card box (Web Payments SDK). The card number goes straight to Square, never to this site. ---------- */
+let sqCard = null, sqLoading = null;
+function loadSquareJs() {
+  if (window.Square) return Promise.resolve();
+  if (sqLoading) return sqLoading;
+  sqLoading = new Promise((ok, bad) => {
+    const el = document.createElement('script');
+    el.src = SQ.env === 'production' ? 'https://web.squarecdn.com/v1/square.js' : 'https://sandbox.web.squarecdn.com/v1/square.js';
+    el.onload = ok; el.onerror = () => { sqLoading = null; bad(new Error('The secure card form could not load. Check your connection and try again, or call us.')) };
+    document.head.appendChild(el);
+  });
+  return sqLoading;
+}
+async function mountCard() {
+  const box = document.getElementById('sq-card'); if (!box) return;
   try {
-    S.done = await api('/api/book', { ...payload(), sig: S.sig.trim(), agree: S.agree, ack: true });
-    S.busy = false; go(DONE); loadAvail();
+    await loadSquareJs();
+    if (sqCard) { try { await sqCard.destroy() } catch { } sqCard = null }
+    const payments = window.Square.payments(SQ.appId, SQ.locationId);
+    const card = await payments.card();
+    if (!document.getElementById('sq-card')) return; // the guest left this step while it loaded
+    box.innerHTML = ''; await card.attach('#sq-card'); sqCard = card;
+  } catch (e) { box.innerHTML = `<p class="small error-text">${esc(e.message || 'The secure card form could not load. Please refresh, or call us.')}</p>` }
+}
+function setBusy(on) { S.busy = on; const b = document.getElementById('submitBtn'); if (b) { b.disabled = on; b.textContent = on ? 'Sending…' : 'Submit booking'; on ? b.setAttribute('aria-busy', 'true') : b.removeAttribute('aria-busy') } }
+async function submit() {
+  const extra = { ack: true };
+  if (SQ) {
+    const holder = (document.getElementById('c-holder')?.value || '').trim(); S.cardHolder = holder;
+    const errs = [];
+    if (!holder) errs.push('Enter the name on the card.');
+    if (!document.getElementById('c-consent')?.checked) errs.push('Check the box to let us keep your card on file.');
+    if (!sqCard) errs.push('The secure card form is still loading. Please wait a moment and try again.');
+    if (errs.length) return showErrors(errs);
+    setBusy(true);
+    try {
+      const [given, ...rest] = S.form.name.trim().split(/\s+/);
+      const t = await sqCard.tokenize({ intent: 'STORE', customerInitiated: true, sellerKeyedIn: false, billingContact: { givenName: given, familyName: rest.join(' '), email: S.form.email, phone: S.form.phone.replace(/[^\d+]/g, ''), countryCode: 'US' } });
+      if (t.status !== 'OK') { setBusy(false); return showErrors([(t.errors || []).map(x => x.message).filter(Boolean).join(' ') || 'Please check your card details.']) }
+      Object.assign(extra, { cardToken: t.token, cardHolder: holder, cardConsent: true });
+    } catch (e) { setBusy(false); return showErrors([e.message || 'Your card could not be checked. Please try again.']) }
+  } else if (!document.getElementById('c-ack')?.checked) return showErrors(['Check the box to confirm you understand how your space is held.']);
+  else setBusy(true);
+  try {
+    S.done = await api('/api/book', { ...payload(), sig: S.sig.trim(), agree: S.agree, ...extra });
+    S.busy = false; S.cardHolder = undefined; go(DONE); loadAvail();
   } catch (err) {
-    S.busy = false;
-    if (err.status === 409) await loadAvail(); else render();
-    const ack = document.getElementById('c-ack'); if (ack) ack.checked = true;
+    setBusy(false);
+    if (err.status === 409) { await loadAvail(); go(2) }
     showErrors([err.message]);
   }
 }

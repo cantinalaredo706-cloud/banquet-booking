@@ -276,3 +276,10 @@ input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:
 .mc-head .price{font-family:var(--f-display);font-size:1.4rem}
 .mc-head .price small{font-family:var(--f-body);font-size:.8rem;color:var(--muted)}
 .linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;cursor:pointer;font-size:inherit}
+
+/* Step 6: Square card box */
+.sq-card{min-height:90px}
+.bring{background:var(--gold-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.92rem}
+.bring b{color:var(--gold)}
+.error-text{color:var(--chile);font-weight:600}
+.pill.sq{background:var(--accent-soft);color:var(--accent);font-size:.68rem}

@@ -1,6 +1,7 @@
 /* POST /api/book — the guest submits the booking. Checks the time is still open, saves it, and sends the emails. */
 import { getDB, json, fail, readJson, cleanBooking, alertManagers, sendMail, bookingView, HttpError, SLOT_COLS } from '../../lib/server.js';
 import * as R from '../../public/js/rules.js';
+import { squareReady, saveCard, removeCard } from '../../lib/square.js';
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -15,9 +16,16 @@ export async function onRequestPost({ request, env }) {
     const problem = A.slotProblem(req.space, req.sel);
     if (problem) throw new HttpError(409, problem);
 
+    // Save the card in Square first (nothing is charged). If the booking then can't be saved, the card is taken off file again.
+    let card = null;
+    if (squareReady(env)) {
+      if (!body.cardConsent) throw new HttpError(400, 'Check the box to let us keep your card on file.');
+      card = await saveCard(env, { token: body.cardToken, verificationToken: body.verificationToken, holder: String(body.cardHolder || '').slice(0, 96).trim(), name: req.form.name, email: req.form.email, phone: req.form.phone, ref: `${req.space}-${req.sel.date}` });
+    }
+
     const why = A.needsApproval(req.space, req.sel.date) || (req.space === 'pdr' && req.sel.block === 'lunch' && req.sel.ext ? 'Lunch extension to 4 pm requested' : null);
     const now = Date.now();
-    const b = bookingView(req, { status: why ? 'held' : 'confirmed', why, card: null, sig: req.sig, signedAt: now });
+    const b = bookingView(req, { status: why ? 'held' : 'confirmed', why, card, sig: req.sig, signedAt: now });
     const { space, date, block, time, ext, name, email, phone, guests, status, ...rest } = b;
     const data = JSON.stringify({ ...rest, ext: undefined, why: undefined });
 
@@ -28,6 +36,7 @@ export async function onRequestPost({ request, env }) {
         .bind(now, status, space, date, block, time, ext ? 1 : 0, name, email, phone, guests, why, data).run();
       id = r.meta.last_row_id;
     } catch (e) {
+      if (card) { try { await removeCard(env, card) } catch (x) { console.error('could not remove card after failed save', x) } }
       if (/UNIQUE/i.test(String(e.message || e))) throw new HttpError(409, 'Someone just reserved this time. Go back and pick another.');
       throw e;
     }
@@ -37,6 +46,6 @@ export async function onRequestPost({ request, env }) {
     const g = R.guestEmail(b, status === 'held' ? 'received' : 'confirmed');
     await sendMail(env, DB, { kind: 'guest', to: email, subject: g.s, body: g.b, bookingId: id });
 
-    return json({ id, status, space, date, name, card: null });
+    return json({ id, status, space, date, name, card: card ? { brand: card.brand, last4: card.last4 } : null });
   } catch (e) { return fail(e) }
 }

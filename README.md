@@ -21,7 +21,18 @@ Guests book the Private Dining Room, Dining Room or Bar online. Managers approve
 | `SITE_URL` | The site's address, used for the manager-view link in alert emails |
 | `ACCESS_TEAM_DOMAIN` | From Cloudflare Access, e.g. `yourteam.cloudflareaccess.com` |
 | `ACCESS_AUD` | Optional: the Access application's "AUD tag", to tie sign-ins to that one application |
+| `SQUARE_ENV` | `sandbox` while testing, `production` for real cards |
+| `SQUARE_APP_ID` | Square Developer Dashboard → your application → Application ID (sandbox or production, to match `SQUARE_ENV`) |
+| `SQUARE_LOCATION_ID` | Square Developer Dashboard → Locations → the restaurant's Location ID (sandbox or production) |
+| `SQUARE_ACCESS_TOKEN` | Square Developer Dashboard → Access token — add as **Secret** (encrypted). Never paste it anywhere else. |
 
 Until email is set up, bookings still save and every email shows in the manager view as "Not sent".
-The card-on-file step (Stripe) is switched off; guests are told a manager will call to take a card.
+## Card on file (Square)
+When the three Square settings above are filled in, the Submit step shows Square's own card box. The card is saved to a
+Square customer and **not charged**; this site only keeps the card type, last 4 digits and expiration. Until then the step
+is off and guests are told a manager will call to take a card.
+- Guests are told the card is only for a cancellation or no-show fee and that they must bring a card or other payment for the bill.
+- To charge a fee: in Square (Virtual Terminal or the Square app), enter the fee, choose **Card on file**, and pick the guest.
+- Declining a booking removes its card from Square automatically. Cancelling keeps it (in case you charge a fee); use
+  **Remove card** in the manager view afterward. Remove cards after each event, too.
 Before launch: set `BRAND` in `public/js/rules.js` to the approved name and remove the `noindex` lines in `public/_headers`.

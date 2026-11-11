@@ -56,12 +56,19 @@ function addForm() {
     </div>
     <div class="actions"><button type="button" class="btn ghost small" data-action="addcancel">Cancel</button><button type="button" class="btn primary small" data-action="addsave" ${busy ? 'disabled' : ''}>${editing ? 'Save changes' : 'Add booking'}</button></div></div>`;
 }
+/* The saved card: brand and last 4 only (the full number stays in Square). */
+function cardCell(b, small) {
+  const c = b.card;
+  if (!c) return b.manual ? '<span class="muted">Not taken online</span>' : 'Not on file yet — call the guest';
+  if (c.removed) return `<span class="muted">${esc(c.brand)} •••• ${esc(c.last4)} · removed from Square</span>`;
+  return `${esc(c.brand)} •••• ${esc(c.last4)}${c.exp ? ` <span class="muted small">exp ${esc(c.exp)}</span>` : ''} <span class="pill sq">${c.squareEnv === 'sandbox' ? 'Square TEST' : 'In Square'}</span>${small ? '' : `<br><span class="small muted">Only for a cancellation or no-show fee. Charge it in Square (Virtual Terminal or the Square app → Card on file).</span>`} <button type="button" class="linkbtn small" data-action="rmcard" data-id="${b.id}" ${busy ? 'disabled' : ''}>Remove card</button>`;
+}
 const printBtn = b => `<a class="btn ghost small" href="/manager/print.html?id=${b.id}" target="_blank" rel="noopener" title="Open a printable copy you can print or save as a PDF">Print</a>`;
 const when = b => b.space === 'pdr' ? (b.block === 'lunch' ? `Lunch${b.time != null ? ' ' + fmtT(b.time) : ''}${b.ext ? ' (room until 4)' : ''}` : 'Dinner ' + fmtT(b.time)) : fmtT(b.time);
 function card(b) {
   const e = R.estimate(b);
   return `<div class="req"><div class="row"><b>${esc(b.name)}</b><span class="pill held">On hold</span></div><span class="why">${esc(b.why)}</span>
-    <dl class="kv"><dt>When</dt><dd>${esc(R.whenText(b))}</dd><dt>Guests</dt><dd>${b.guests} · ${esc(b.type)}</dd>${b.org ? `<dt>Company</dt><dd>${esc(b.org)}</dd>` : ''}<dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}${b.brunchAdd ? ' + coffee/tea/OJ' : ''}</dd>${(+b.platS || +b.platL) ? `<dt>Platters</dt><dd>${+b.platS || 0} small, ${+b.platL || 0} large</dd>` : ''}<dt>Bar</dt><dd>${esc(R.barText(b))}</dd><dt>Checks</dt><dd>${esc(b.checks)}</dd>${b.tv ? '<dt>TV</dt><dd>Yes ($75)</dd>' : ''}${e.priced ? `<dt>Estimate</dt><dd class="mono">${money(e.total)}</dd>` : ''}<dt>Card</dt><dd>${b.card ? `${esc(b.card.brand)} •••• ${esc(b.card.last4)}` : 'Not on file yet — call the guest'}</dd><dt>Contact</dt><dd><a href="mailto:${esc(b.email)}">${esc(b.email)}</a><br><a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></dd><dt>Submitted</dt><dd>${esc(R.fmtStamp(b.createdAt))}</dd>${b.enteredBy ? `<dt>Entered by</dt><dd>${esc(b.enteredBy)}</dd>` : ''}${b.lastChangedBy ? `<dt>Last changed by</dt><dd>${esc(b.lastChangedBy)}</dd>` : ''}</dl>
+    <dl class="kv"><dt>When</dt><dd>${esc(R.whenText(b))}</dd><dt>Guests</dt><dd>${b.guests} · ${esc(b.type)}</dd>${b.org ? `<dt>Company</dt><dd>${esc(b.org)}</dd>` : ''}<dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}${b.brunchAdd ? ' + coffee/tea/OJ' : ''}</dd>${(+b.platS || +b.platL) ? `<dt>Platters</dt><dd>${+b.platS || 0} small, ${+b.platL || 0} large</dd>` : ''}<dt>Bar</dt><dd>${esc(R.barText(b))}</dd><dt>Checks</dt><dd>${esc(b.checks)}</dd>${b.tv ? '<dt>TV</dt><dd>Yes ($75)</dd>' : ''}${e.priced ? `<dt>Estimate</dt><dd class="mono">${money(e.total)}</dd>` : ''}<dt>Card</dt><dd>${cardCell(b)}</dd><dt>Contact</dt><dd><a href="mailto:${esc(b.email)}">${esc(b.email)}</a><br><a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></dd><dt>Submitted</dt><dd>${esc(R.fmtStamp(b.createdAt))}</dd>${b.enteredBy ? `<dt>Entered by</dt><dd>${esc(b.enteredBy)}</dd>` : ''}${b.lastChangedBy ? `<dt>Last changed by</dt><dd>${esc(b.lastChangedBy)}</dd>` : ''}</dl>
     ${b.notes ? `<p class="small muted">“${esc(b.notes)}”</p>` : ''}
     <div class="actions" style="justify-content:flex-end">${printBtn(b)}<button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button><button type="button" class="btn danger small" data-action="decline" data-id="${b.id}" ${busy ? 'disabled' : ''}>Decline</button><button type="button" class="btn primary small" data-action="approve" data-id="${b.id}" ${busy ? 'disabled' : ''}>Approve</button></div></div>`;
 }
@@ -80,8 +87,8 @@ function render() {
     ${addForm()}
     <div class="panel-head"><span class="eyebrow">Manager view</span><h2>Needs your approval</h2><p class="muted">Held bookings keep the space until you decide. Approving or declining emails the guest.</p></div>
     ${D.held.length ? D.held.map(card).join('') : `<p class="empty">Nothing waiting. Private Dining Room and Bar bookings, lunch extensions, and the 3rd+ Dining Room party of a day show up here.</p>`}
-    <div class="card"><h3 style="margin-bottom:8px">Upcoming parties</h3>${D.upcoming.length ? `<div class="tablewrap"><table class="up"><tbody>${D.upcoming.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}<br><span class="muted small">${when(b)}</span></td><td>${esc(b.name)}<br><span class="muted small">${b.guests} guests · <a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></span></td><td><span class="pill ${b.status}">${b.status === 'held' ? 'On hold' : 'Confirmed'}</span>${b.manual ? `<br><span class="muted small">Added by ${esc(b.enteredBy || 'hand')}</span>` : ''}${b.lastChangedBy ? `<br><span class="muted small">Changed by ${esc(b.lastChangedBy)}</span>` : ''}</td><td><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${printBtn(b)}<button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button>${b.status === 'confirmed' ? `<button type="button" class="btn danger small" data-action="cancelbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Cancel</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No upcoming parties yet.</p>'}</div>
-    ${D.declined.length ? `<div class="card"><h3 style="margin-bottom:8px">Recently declined or cancelled</h3><div class="tablewrap"><table class="up"><tbody>${D.declined.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}</td><td>${esc(b.name)}</td><td class="small muted">${b.cancelled ? 'Cancelled' : 'Declined'}${b.decidedBy ? ' by ' + esc(b.decidedBy) : ''}</td><td style="text-align:right">${printBtn(b)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
+    <div class="card"><h3 style="margin-bottom:8px">Upcoming parties</h3>${D.upcoming.length ? `<div class="tablewrap"><table class="up"><tbody>${D.upcoming.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}<br><span class="muted small">${when(b)}</span></td><td>${esc(b.name)}<br><span class="muted small">${b.card ? `${cardCell(b, true)} · ` : ''}${b.guests} guests · <a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></span></td><td><span class="pill ${b.status}">${b.status === 'held' ? 'On hold' : 'Confirmed'}</span>${b.manual ? `<br><span class="muted small">Added by ${esc(b.enteredBy || 'hand')}</span>` : ''}${b.lastChangedBy ? `<br><span class="muted small">Changed by ${esc(b.lastChangedBy)}</span>` : ''}</td><td><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${printBtn(b)}<button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button>${b.status === 'confirmed' ? `<button type="button" class="btn danger small" data-action="cancelbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Cancel</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No upcoming parties yet.</p>'}</div>
+    ${D.declined.length ? `<div class="card"><h3 style="margin-bottom:8px">Recently declined or cancelled</h3><div class="tablewrap"><table class="up"><tbody>${D.declined.map(b => `<tr><td>${fmtShort(b.date)}</td><td>${SPACES[b.space].name}</td><td>${esc(b.name)}</td><td class="small muted">${b.cancelled ? 'Cancelled' : 'Declined'}${b.decidedBy ? ' by ' + esc(b.decidedBy) : ''}${b.card ? `<br>${cardCell(b, true)}` : ''}</td><td style="text-align:right">${printBtn(b)}</td></tr>`).join('')}</tbody></table></div></div>` : ''}
   </div><div class="col">
     <div class="panel-head"><span class="eyebrow">Email notifications</span><h2>Emails</h2><p class="muted">Every email the site sent or tried to send, newest first. Click one to read it.</p></div>
     <div class="inbox">${D.emails.length ? D.emails.map(m => `<div class="mail"><button type="button" data-action="mail" data-id="${m.id}" aria-expanded="${open === m.id}"><span class="unread r"></span><span style="min-width:0"><span class="subj" style="display:block">${m.kind === 'guest' ? '<span class="tag g">To guest</span>' : '<span class="tag">To managers</span>'}${esc(m.subject)}</span><span class="to">${esc(m.to_addr)}<span class="res ${m.result === 'Sent' ? '' : 'no'}">${esc(m.result)}</span></span></span><span class="t">${esc(R.fmtStamp(m.at))}</span></button>${open === m.id ? `<div class="body">${esc(m.body)}</div>` : ''}</div>`).join('') : '<p class="empty" style="padding:12px 14px">No emails yet.</p>'}</div>
@@ -101,7 +108,7 @@ document.addEventListener('click', async e => {
     const b = D.held.find(x => x.id === +t.dataset.id);
     if (!confirm(`${a === 'approve' ? 'Approve' : 'Decline'} ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe guest will be emailed.`)) return;
     busy = true; render();
-    try { const r = await api('/api/manager/decide', { id: b.id, decision: a }); toast(`${a === 'approve' ? 'Approved' : 'Declined'}. Guest email: ${r.guestEmail}.`) }
+    try { const r = await api('/api/manager/decide', { id: b.id, decision: a }); toast(`${a === 'approve' ? 'Approved' : 'Declined'}. Guest email: ${r.guestEmail}.${a === 'decline' && b.card && !b.card.removed ? (r.cardRemoveFailed ? ' The card could NOT be removed from Square — remove it there by hand.' : ' Card removed from Square.') : ''}`) }
     catch (x) { toast(x.message) }
     busy = false; return load();
   }
@@ -129,9 +136,16 @@ document.addEventListener('click', async e => {
   }
   if (a === 'cancelbk') {
     const b = D.upcoming.find(x => x.id === +t.dataset.id);
-    if (!confirm(`Cancel ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe time opens up again on the guest calendar. The guest is NOT emailed, so let them know yourself.`)) return;
+    if (!confirm(`Cancel ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe time opens up again on the guest calendar. The guest is NOT emailed, so let them know yourself.${b.card && !b.card.removed ? '\n\nTheir card stays in Square in case you charge a cancellation fee. Use “Remove card” when you are done.' : ''}`)) return;
     busy = true; render();
     try { await api('/api/manager/cancel', { id: b.id }); toast(`Cancelled ${b.name}.`) } catch (x) { toast(x.message) }
+    busy = false; return load();
+  }
+  if (a === 'rmcard') {
+    const b = [...D.held, ...D.upcoming, ...D.declined].find(x => x.id === +t.dataset.id); if (!b) return;
+    if (!confirm(`Remove ${b.name}'s ${b.card.brand} ending ${b.card.last4} from Square?\n\nIt can't be charged after this. Do this after the event, or after charging any cancellation fee.`)) return;
+    busy = true; render();
+    try { await api('/api/manager/card', { id: b.id }); toast(`Card removed from Square for ${b.name}.`) } catch (x) { toast(x.message) }
     busy = false; return load();
   }
   if (a === 'save') {

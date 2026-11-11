@@ -320,7 +320,7 @@ export function agreementHtml(o) {
     const pt = pdrTerms(o.date, o.block);
     return `<h4>Private Party Agreement</h4>${head}<h4>Policies</h4><ol>
     <li>We do not charge room rental fees. We require a food &amp; beverage minimum. The minimum charge on the final guest check for your event, before tax and gratuity, is <b>${money0(pt.min)}</b>.</li>
-    <li>The credit card on file secures the room for your event. It is not charged at booking.</li>
+    <li>The credit card on file secures the room for your event. It is not charged at booking, and it is only used for the cancellation or no-show fee described below. <b>It cannot be used to pay for your event, so please bring a physical credit card or other payment to pay your bill at the restaurant.</b></li>
     <li><b>Cancellation:</b> Due to staffing requirements, your card <b>will be charged ${money0(pt.fee)}</b> if you cancel less than 72 hours before the scheduled event. The cancellation fee is only charged if the reservation is cancelled within that time frame.</li>
     <li>A final guest count must be received no later than 2 days before the party.</li>${common}
     <li>Applicable sales tax and a 22% banquet gratuity will be added to your check(s).</li>
@@ -329,7 +329,7 @@ export function agreementHtml(o) {
     <p>Your signature indicates acceptance of the material contained herein and of the Banquet Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`
   }
   if (o.space === 'dr') return `<h4>Dining Room Party Agreement</h4>${head}<h4>Policies</h4><ol>
-    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking.</li>
+    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking, and it is only used for the cancellation or no-show fee described below. <b>It cannot be used to pay for your event, so please bring a physical credit card or other payment to pay your bill at the restaurant.</b></li>
     <li>We will hold your table for 30 minutes past your reservation time. After that, it is considered a no-show and the cancellation fee is charged.</li>
     <li><b>Cancellation:</b> cancellations made less than 12 hours before the event are charged the cancellation fee for your party size: 9–15 guests $200, 16–25 guests $250, over 25 guests $300. Your fee: <b>${money0(drFee(g))}</b>.</li>
     <li>A final guest count must be received no later than 2 days before the party.</li>${common}
@@ -338,7 +338,7 @@ export function agreementHtml(o) {
     <li>Use of confetti or confetti poppers is prohibited. A $100 cleaning fee will be charged if any are used.</li></ol>
     <p>Your signature indicates acceptance of the material contained herein and of the Event Policies, and authorizes us to keep your card on file and charge it as described above.</p>`;
   return `<h4>Bar Party Agreement</h4>${head}<h4>Policies</h4><ol>
-    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking.</li>
+    <li>We do not charge rental fees. We require a credit card on file to guarantee the space for your event. It is not charged at booking, and it is only used for the cancellation or no-show fee described below. <b>It cannot be used to pay for your event, so please bring a physical credit card or other payment to pay your bill at the restaurant.</b></li>
     <li>We will hold your table for 30 minutes past your reservation time. After that, it is considered a cancellation/no-show and the cancellation fee is charged.</li>
     <li><b>Cancellation:</b> cancellations made less than 24 hours before the event are charged the cancellation fee for your party size: 9–15 guests $150, 16–25 guests $200, over 25 guests $250. Your fee: <b>${money0(barFee(g))}</b>.</li>
     <li>A final guest count must be received no later than 2 days before the party.</li>${common}
@@ -398,6 +398,15 @@ export const sigMatches = (sig, name) => String(sig).trim().toLowerCase() === St
 
 /* ---------- Email wording ---------- */
 const NO_CARD = 'not collected yet (the online card step is switched off). Please call the guest to put a card on file.';
+/* One line for the card everywhere managers see it (emails, manager view, printouts). */
+export function cardText(c) {
+  if (!c) return null;
+  const base = `${c.brand} ending ${c.last4}${c.exp ? `, exp. ${c.exp}` : ''}${c.holder ? `, name on card ${c.holder}` : ''}`;
+  if (c.removed) return `${base} (removed from Square ${fmtStamp(c.removedAt)}${c.removedBy ? ' by ' + c.removedBy : ''})`;
+  return `${base} (saved in Square${c.squareEnv === 'sandbox' ? ' TEST mode' : ''}, not charged)`;
+}
+export const SQUARE_HOWTO = 'To charge a cancellation or no-show fee, enter the fee in Square (Virtual Terminal or the Square Point of Sale app), choose Card on file, and pick this guest. The card is only for the fee, never for the party bill.';
+export const BRING_CARD = 'Please note: the card on file is only for the cancellation or no-show fee. It cannot be used to pay for your party, so please bring a physical credit card or other payment to pay your bill at the restaurant.';
 export function inquiryEmail(b) {
   const e = estimate(b), sp = SPACES[b.space];
   return {
@@ -413,7 +422,7 @@ export function signedEmail(b, sig, at) {
 }
 export function reqBody(b) {
   const e = estimate(b);
-  const card = b.card ? `${b.card.brand} ending ${b.card.last4}, name on card ${b.card.holder} (held by the payment processor, not charged)` : NO_CARD;
+  const card = b.card ? cardText(b.card) + (b.card.removed ? '' : '\n' + SQUARE_HOWTO) : NO_CARD;
   return `${b.name} ${b.status === 'confirmed' ? 'booked' : 'submitted a booking request'}${b.card ? ' and put a card on file' : ''}.${b.status === 'held' ? ' The space is on HOLD until you approve or decline.\nReason: ' + b.why : ''}\n\n${whenText(b)}\nGuests: ${b.guests} · ${b.type}${b.org ? '\nCompany: ' + b.org : ''}\nFood: ${e.f ? e.f.name : '—'}${b.brunchAdd ? ' + coffee/tea/OJ' : ''}${(+b.platS || +b.platL) ? `\nPlatters: ${+b.platS || 0} small, ${+b.platL || 0} large` : ''}\nBar: ${barText(b)}\nChecks: ${b.checks}${b.tv ? '\nTV with HDMI: yes ($75)' : ''}\n${e.priced ? `Estimated total: ${money(e.total)}\n` : ''}${e.pt ? `Food & beverage minimum: ${money0(e.pt.min)}\n` : ''}Cancellation: ${cancelText(b)}\n\nContact: ${b.email} · ${b.phone}${b.enteredBy ? `\nEntered by: ${b.enteredBy}` : ''}\nCard on file: ${card}${b.notes ? '\n\nSpecial instructions: ' + b.notes : ''}`;
 }
 export function managerAlert(b) {
@@ -424,12 +433,12 @@ export function managerAlert(b) {
 export function approvedAlert(b, by) {
   return {
     s: `Booked: ${b.name}, ${SPACES[b.space].name}, ${fmtShort(b.date)}`,
-    b: `${by ? by + ' approved' : 'You approved'} this booking. The guest has been emailed a confirmation.\n\n${whenText(b)}\n${b.guests} guests\nCard on file: ${b.card ? `${b.card.brand} ending ${b.card.last4}` : NO_CARD}`
+    b: `${by ? by + ' approved' : 'You approved'} this booking. The guest has been emailed a confirmation.\n\n${whenText(b)}\n${b.guests} guests\nCard on file: ${b.card ? cardText(b.card) : NO_CARD}`
   };
 }
 export function guestEmail(b, stage) { /* stage: received | confirmed | declined */
   const first = b.name.split(' ')[0];
-  if (stage === 'declined') return { s: `About your request for ${fmtShort(b.date)}`, b: `Hi ${first},\n\nUnfortunately we can't host your party in the ${SPACES[b.space].name} on ${fmtLong(b.date)}. ${b.card ? 'Your card on file has been removed and was never charged.' : 'No card was taken.'}\n\nPlease reply or call us and we'll help find another date or space.\n\nBest regards,\n${GM}` };
+  if (stage === 'declined') return { s: `About your request for ${fmtShort(b.date)}`, b: `Hi ${first},\n\nUnfortunately we can't host your party in the ${SPACES[b.space].name} on ${fmtLong(b.date)}. ${b.card ? (b.card.removed ? 'Your card on file has been removed and was never charged.' : 'Your card was never charged and will be removed from file.') : 'No card was taken.'}\n\nPlease reply or call us and we'll help find another date or space.\n\nBest regards,\n${GM}` };
   let out;
   if (b.space === 'pdr') {
     const pt = pdrTerms(b.date, b.block);
@@ -450,6 +459,7 @@ export function guestEmail(b, stage) { /* stage: received | confirmed | declined
       b: `Dear ${b.name},\n\nThank you for considering us for your upcoming event. We are committed to ensuring that your event is enjoyable, memorable, and stress-free.\n\n${stage === 'confirmed' ? `Your Bar seating for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)} is confirmed.` : `We received your Bar request for ${b.guests} guests on ${fmtLong(b.date)} at ${fmtT(b.time)}.`}\n\nPlease note:\n\n• The credit card provided will not be charged at this time. It is simply to secure your bar seating.\n• You will have 24 hours before your event to cancel without incurring any fees. If you choose to cancel within 24 hours, a cancellation fee of ${money0(barFee(b.guests))} will be charged to your card.\n• We will hold your table for 30 minutes past your reservation time; after that, it is considered a no-show and the cancellation fee applies.\n• A final guest count is required 2 days prior to your event date for preparation purposes.\n\nIf your event includes a buffet or appetizer-style service, please note that all food charges will be consolidated into a single bill.\n\nIf you have any questions or need further assistance, please don't hesitate to reach out. We're here to help make your event a success!\n\nBest regards,\n${GM}`
     };
   }
+  out.b = out.b.replace(/\n\nBest regards,/, `\n\n${BRING_CARD}\n\nBest regards,`);
   if (!b.card) {
     out.b = out.b.replace('A credit card is on file to hold the reservation', 'A credit card is needed to hold the reservation');
     // Bookings a manager added by hand were arranged on the phone, so no "we'll call you" line.
