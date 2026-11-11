@@ -36,3 +36,7 @@ is off and guests are told a manager will call to take a card.
 - Declining a booking removes its card from Square automatically. Cancelling keeps it (in case you charge a fee); use
   **Remove card** in the manager view afterward. Remove cards after each event, too.
 Before launch: set `BRAND` in `public/js/rules.js` to the approved name and remove the `noindex` lines in `public/_headers`.
+
+## Publishing a change to styles or scripts
+Browsers keep copies of `public/css` and `public/js` files for hours. Every page links them with `?v=<number>`;
+run `python3 scripts/bump-version.py` before committing so browsers fetch the new copy right away.

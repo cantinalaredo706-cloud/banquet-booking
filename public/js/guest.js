@@ -1,5 +1,5 @@
 /* Guest booking page: spaces → date, time & guests → menus → party details → agreement → submit. */
-import * as R from './rules.js';
+import * as R from './rules.js?v=2026111101';
 const { SPACES, BUFFETS, BAROPTS, LUNCH_SET, DINNER_SET, money, money0, esc, fmtLong, fmtShort, fmtT, pad } = R;
 
 document.getElementById('brand-line').textContent = `${R.BRAND} · ${R.LOCATION}`;
@@ -231,11 +231,11 @@ function summary() {
   return `<div class="ticket"><div class="th"><span class="eyebrow" style="color:inherit;opacity:.8">${sp.name}</span><h3>${fmtShort(S.sel.date)}</h3></div><div class="tb">
     <dl class="kv"><dt>Time</dt><dd>${timeTxt}</dd><dt>Guests</dt><dd>${e.g || '—'}</dd><dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}</dd><dt>Bar</dt><dd>${esc(R.barText(o))}</dd>${e.pt ? `<dt>F&amp;B minimum</dt><dd class="mono">${money0(e.pt.min)}</dd>` : ''}<dt>Cancel fee</dt><dd>${esc(R.cancelText(o))}</dd></dl>
     ${e.priced ? `<div class="est"><span class="eyebrow">Estimate</span><dl class="kv" style="margin-top:6px">
-      ${e.per != null ? `<dt>Food (${e.g} × ${money(e.per)})</dt><dd>${money(e.food)}</dd>` : ''}${e.plat ? `<dt>Platters</dt><dd>${money(e.plat)}</dd>` : ''}
+      ${e.per != null ? `<dt>Food (${e.g} × ${money(e.per)})</dt><dd>${money(e.food)}</dd>` : ''}${e.plat ? `<dt>Platters</dt><dd>${money(e.plat)}</dd>` : ''}${e.bar ? `<dt>Bar (up to your cap)</dt><dd>${money(e.bar)}</dd>` : ''}
       ${e.short ? `<dt>To reach ${money0(e.pt.min)} minimum</dt><dd>${money(e.short)}</dd>` : ''}
       <dt>Gratuity 22%</dt><dd>${money(e.grat)}</dd><dt>Sales tax 6.5%</dt><dd>${money(e.tax)}</dd>${e.tv ? `<dt>TV with HDMI</dt><dd>${money(e.tv)}</dd>` : ''}
       <div class="total" style="display:contents"><dt>Estimated total</dt><dd>${money(e.total)}</dd></div></dl>
-      <p class="muted small" style="margin-top:8px">${R.foodOnly(e.f) || e.plat ? 'Food prices don\'t include drinks. ' : ''}${o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
+      <p class="muted small" style="margin-top:8px">${R.foodOnly(e.f) || e.plat ? 'Food prices don\'t include drinks. ' : ''}${o.bar === 'cap' ? 'The bar is counted at its full cap; if guests order less, the bar charge is lower. ' : o.bar !== 'cash' ? 'Bar charges are billed on what guests order and count toward any minimum. ' : ''}Final bill is based on your final guest count.</p></div>`
       : e.f && e.f.id === 'menu' ? `<p class="muted small">Guests order from the menu at the event, so there's no estimate.${e.pt ? ` Your check must reach ${money0(e.pt.min)} before tax and gratuity.` : ''}</p>` : ''}</div></div>`
 }
 const updateSummary = () => { const el = document.getElementById('summary'); if (el) el.innerHTML = summary() };

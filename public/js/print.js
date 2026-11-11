@@ -1,5 +1,5 @@
 /* Printable copy of one booking, for the restaurant's paper files. Opened from the manager view. */
-import * as R from './rules.js';
+import * as R from './rules.js?v=2026111101';
 const { SPACES, esc, money, money0, fmtLong, fmtT } = R;
 
 const sheet = document.getElementById('sheet'), btn = document.getElementById('printBtn');
@@ -50,7 +50,7 @@ function render(b) {
   <div class="duo">${e.f && e.f.menu ? `<section><h2>${esc(e.f.name)}</h2>${menuBlock(e.f.menu)}</section>` : ''}
 
   ${e.priced ? `<section><h2>Estimate</h2><table class="est">
-    ${e.per != null ? `<tr><th>Food (${e.g} × ${money(e.per)})</th><td>${money(e.food)}</td></tr>` : ''}${e.plat ? `<tr><th>Appetizer platters</th><td>${money(e.plat)}</td></tr>` : ''}
+    ${e.per != null ? `<tr><th>Food (${e.g} × ${money(e.per)})</th><td>${money(e.food)}</td></tr>` : ''}${e.plat ? `<tr><th>Appetizer platters</th><td>${money(e.plat)}</td></tr>` : ''}${e.bar ? `<tr><th>Bar (up to the cap)</th><td>${money(e.bar)}</td></tr>` : ''}
     ${e.short ? `<tr><th>To reach the ${money0(e.pt.min)} minimum</th><td>${money(e.short)}</td></tr>` : ''}
     <tr><th>Gratuity 22%</th><td>${money(e.grat)}</td></tr><tr><th>Sales tax 6.5%</th><td>${money(e.tax)}</td></tr>${e.tv ? `<tr><th>TV with HDMI</th><td>${money(e.tv)}</td></tr>` : ''}
     <tr class="total"><th>Estimated total</th><td>${money(e.total)}</td></tr></table>

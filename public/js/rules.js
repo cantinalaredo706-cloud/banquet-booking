@@ -288,11 +288,13 @@ export function estimate(o) {
   const g = parseInt(o.guests, 10) || 0, f = foodInfo(o.food);
   const plat = (+o.platS || 0) * 75 + (+o.platL || 0) * 95;
   const per = f && f.price != null ? f.price + (f.brunch && o.brunchAdd ? 2 : 0) : null;
-  const food = per != null ? per * g : 0, fb = food + plat;
+  const food = per != null ? per * g : 0;
+  const bar = o.bar === 'cap' ? Math.max(0, +o.barCap || 0) : 0; // a capped bar is counted at its full cap
+  const fb = food + plat + bar;
   const pt = o.space === 'pdr' && o.block ? pdrTerms(o.date, o.block) : null;
   const billed = pt ? Math.max(fb, pt.min) : fb, short = pt ? Math.max(0, pt.min - fb) : 0;
   const tv = o.tv && o.space === 'pdr' ? 75 : 0;
-  return { g, f, per, food, plat, fb, pt, billed, short, grat: billed * GRAT, tax: billed * TAX, tv, total: billed * (1 + GRAT + TAX) + tv, priced: per != null || plat > 0 };
+  return { g, f, per, food, plat, bar, fb, pt, billed, short, grat: billed * GRAT, tax: billed * TAX, tv, total: billed * (1 + GRAT + TAX) + tv, priced: per != null || plat > 0 || bar > 0 };
 }
 export function cancelText(o) {
   if (o.space === 'pdr') { if (!o.block) return 'Depends on lunch or dinner'; const pt = pdrTerms(o.date, o.block); return `${money0(pt.fee)} if cancelled less than 72 hours before` }
