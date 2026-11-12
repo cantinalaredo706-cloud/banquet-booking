@@ -1,5 +1,5 @@
 /* Guest booking page: spaces → date, time & guests → menus → party details → agreement → submit. */
-import * as R from './rules.js?v=2026111101';
+import * as R from './rules.js?v=202611111859';
 const { SPACES, BUFFETS, BAROPTS, LUNCH_SET, DINNER_SET, money, money0, esc, fmtLong, fmtShort, fmtT, pad } = R;
 
 document.getElementById('brand-line').textContent = `${R.BRAND} · ${R.LOCATION}`;
