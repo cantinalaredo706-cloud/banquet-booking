@@ -35,7 +35,7 @@ is off and guests are told a manager will call to take a card.
 - To charge a fee: in Square (Virtual Terminal or the Square app), enter the fee, choose **Card on file**, and pick the guest.
 - Declining a booking removes its card from Square automatically. Cancelling keeps it (in case you charge a fee); use
   **Remove card** in the manager view afterward. Remove cards after each event, too.
-Before launch: set `BRAND` in `public/js/rules.js` to the approved name and remove the `noindex` lines in `public/_headers`.
+Search engines may list the guest page; the manager view and `/api/` stay hidden (`noindex`, and blocked in `robots.txt`).
 
 ## Publishing a change to styles or scripts
 Browsers keep copies of `public/css` and `public/js` files for hours. Every page links them with `?v=<number>`;
