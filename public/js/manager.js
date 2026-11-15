@@ -1,5 +1,5 @@
 /* Manager view: approve or decline held bookings, see upcoming parties and every email the site sent. */
-import * as R from './rules.js?v=202611111859';
+import * as R from './rules.js?v=202611151542';
 const { SPACES, esc, money, fmtShort, fmtT } = R;
 
 document.getElementById('brand-line').textContent = `Manager view · ${R.BRAND} · ${R.LOCATION}`;
@@ -102,7 +102,10 @@ function render() {
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-action]'); if (!t || t.disabled) return; const a = t.dataset.action;
   if (a === 'reload') { err = null; document.getElementById('app').innerHTML = '<p class="loading">Loading bookings…</p>'; return load() }
-  if (a === 'signin') { location.href = '/cdn-cgi/access/logout'; return } // clears an old or stale sign-in, then the manager page asks for a fresh one
+  // Sign in again: quietly clear any old sign-in, then reopen the manager page so Cloudflare asks for a fresh one.
+  if (a === 'signin') { e.preventDefault(); fetch('/cdn-cgi/access/logout', { credentials: 'include', cache: 'no-store' }).catch(() => { }).finally(() => { location.href = '/manager/?t=' + Date.now() }); return }
+  // Sign out: clear the sign-in, then go to the guest site instead of Cloudflare's bare sign-out page.
+  if (a === 'signout') { e.preventDefault(); fetch('/cdn-cgi/access/logout', { credentials: 'include', cache: 'no-store' }).catch(() => { }).finally(() => { location.href = '/' }); return }
   if (a === 'mail') { const id = +t.dataset.id; open = open === id ? null : id; render(); return }
   if (a === 'approve' || a === 'decline') {
     const b = D.held.find(x => x.id === +t.dataset.id);
