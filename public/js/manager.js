@@ -1,5 +1,5 @@
 /* Manager view: approve or decline held bookings, see upcoming parties and every email the site sent. */
-import * as R from './rules.js?v=202611151542';
+import * as R from './rules.js?v=202611151600';
 const { SPACES, esc, money, fmtShort, fmtT } = R;
 
 document.getElementById('brand-line').textContent = `Manager view · ${R.BRAND} · ${R.LOCATION}`;
@@ -15,7 +15,7 @@ async function api(path, body) {
   return j;
 }
 async function load() {
-  try { D = await api('/api/manager/data'); err = null }
+  try { D = await api('/manager/api/data'); err = null }
   catch (e) { err = e }
   render();
 }
@@ -111,7 +111,7 @@ document.addEventListener('click', async e => {
     const b = D.held.find(x => x.id === +t.dataset.id);
     if (!confirm(`${a === 'approve' ? 'Approve' : 'Decline'} ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe guest will be emailed.`)) return;
     busy = true; render();
-    try { const r = await api('/api/manager/decide', { id: b.id, decision: a }); toast(`${a === 'approve' ? 'Approved' : 'Declined'}. Guest email: ${r.guestEmail}.${a === 'decline' && b.card && !b.card.removed ? (r.cardRemoveFailed ? ' The card could NOT be removed from Square — remove it there by hand.' : ' Card removed from Square.') : ''}`) }
+    try { const r = await api('/manager/api/decide', { id: b.id, decision: a }); toast(`${a === 'approve' ? 'Approved' : 'Declined'}. Guest email: ${r.guestEmail}.${a === 'decline' && b.card && !b.card.removed ? (r.cardRemoveFailed ? ' The card could NOT be removed from Square — remove it there by hand.' : ' Card removed from Square.') : ''}`) }
     catch (x) { toast(x.message) }
     busy = false; return load();
   }
@@ -127,7 +127,7 @@ document.addEventListener('click', async e => {
     busy = true; render();
     try {
       try { if (F.manager) localStorage.setItem('managerName', F.manager) } catch { }
-      const r = await api(editId != null ? '/api/manager/edit' : '/api/manager/add', editId != null ? { ...F, id: editId } : F);
+      const r = await api(editId != null ? '/manager/api/edit' : '/manager/api/add', editId != null ? { ...F, id: editId } : F);
       toast(`${editId != null ? 'Changes saved' : 'Booking added'} for ${F.name}.${F.emailGuest ? ` Guest email: ${r.guestEmail}.` : ''}`);
       addOpen = false; editId = null; F = freshAdd();
     } catch (x) {
@@ -141,21 +141,21 @@ document.addEventListener('click', async e => {
     const b = D.upcoming.find(x => x.id === +t.dataset.id);
     if (!confirm(`Cancel ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe time opens up again on the guest calendar. The guest is NOT emailed, so let them know yourself.${b.card && !b.card.removed ? '\n\nTheir card stays in Square in case you charge a cancellation fee. Use “Remove card” when you are done.' : ''}`)) return;
     busy = true; render();
-    try { await api('/api/manager/cancel', { id: b.id }); toast(`Cancelled ${b.name}.`) } catch (x) { toast(x.message) }
+    try { await api('/manager/api/cancel', { id: b.id }); toast(`Cancelled ${b.name}.`) } catch (x) { toast(x.message) }
     busy = false; return load();
   }
   if (a === 'rmcard') {
     const b = [...D.held, ...D.upcoming, ...D.declined].find(x => x.id === +t.dataset.id); if (!b) return;
     if (!confirm(`Remove ${b.name}'s ${b.card.brand} ending ${b.card.last4} from Square?\n\nIt can't be charged after this. Do this after the event, or after charging any cancellation fee.`)) return;
     busy = true; render();
-    try { await api('/api/manager/card', { id: b.id }); toast(`Card removed from Square for ${b.name}.`) } catch (x) { toast(x.message) }
+    try { await api('/manager/api/card', { id: b.id }); toast(`Card removed from Square for ${b.name}.`) } catch (x) { toast(x.message) }
     busy = false; return load();
   }
   if (a === 'save') {
     const prefs = {}; document.querySelectorAll('[data-pref]').forEach(el => prefs[el.dataset.pref] = el.checked);
     busy = true; render();
     const alertTo = document.getElementById('alertTo')?.value;
-    try { await api('/api/manager/settings', { alertTo: pending.alertTo ?? alertTo, prefs: pending.prefs ?? prefs }); toast('Settings saved.') }
+    try { await api('/manager/api/settings', { alertTo: pending.alertTo ?? alertTo, prefs: pending.prefs ?? prefs }); toast('Settings saved.') }
     catch (x) { toast(x.message) }
     pending = {}; busy = false; return load();
   }

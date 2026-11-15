@@ -1,5 +1,5 @@
 /* Printable copy of one booking, for the restaurant's paper files. Opened from the manager view. */
-import * as R from './rules.js?v=202611151542';
+import * as R from './rules.js?v=202611151600';
 const { SPACES, esc, money, money0, fmtLong, fmtT } = R;
 
 const sheet = document.getElementById('sheet'), btn = document.getElementById('printBtn');
@@ -31,7 +31,7 @@ function render(b) {
        <div class="lines"><div><span>Guest signature</span></div><div><span>Date</span></div></div>`;
   sheet.innerHTML = `
   <header class="head">
-    <div class="headl"><img class="plogo" src="/img/logo.jpg?v=202611151542" alt="Cantina Laredo"><div><div class="brand">${esc(R.BRAND)} · ${esc(R.LOCATION)}</div><h1>${esc(sp.name)} booking</h1></div></div>
+    <div class="headl"><img class="plogo" src="/img/logo.jpg?v=202611151600" alt="Cantina Laredo"><div><div class="brand">${esc(R.BRAND)} · ${esc(R.LOCATION)}</div><h1>${esc(sp.name)} booking</h1></div></div>
     <div class="meta"><div>Booking <b>#${b.id}</b></div><div class="status ${b.cancelled ? 'declined' : b.status}">${esc(status)}</div><div class="muted">Printed ${esc(R.fmtStamp(Date.now()))}</div></div>
   </header>
 
@@ -71,7 +71,7 @@ function render(b) {
 (async () => {
   const id = new URLSearchParams(location.search).get('id');
   try {
-    const r = await fetch(`/api/manager/booking?id=${encodeURIComponent(id || '')}`, { cache: 'no-store' });
+    const r = await fetch(`/manager/api/booking?id=${encodeURIComponent(id || '')}`, { cache: 'no-store' });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Please sign in to the manager view first, then open this copy again.' : (j.error || `Something went wrong (${r.status}).`));
     render(j.booking);
