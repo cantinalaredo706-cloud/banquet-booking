@@ -50,7 +50,9 @@ export async function onRequest(ctx) {
   if (!String(env.ACCESS_TEAM_DOMAIN || '').trim()) return json({ error: 'The manager login is not set up yet. Finish the Cloudflare Access step first.', setup: true }, 403);
   const cookie = (request.headers.get('cookie') || '').match(/(?:^|;\s*)CF_Authorization=([^;]+)/);
   const token = request.headers.get('cf-access-jwt-assertion') || (cookie && cookie[1]);
-  let r = { why: 'No sign-in pass reached the site. Check that the Access application covers cantinafortmyersevents.com/api/manager.' };
+  // For troubleshooting, say which sign-in pieces arrived (names only, never values).
+  const seen = [cookie ? 'sign-in cookie' : null, request.headers.get('cf-access-jwt-assertion') ? 'sign-in header' : null, /CF_AppSession=/.test(request.headers.get('cookie') || '') ? 'app session cookie' : null].filter(Boolean);
+  let r = { why: `No sign-in pass reached the site (received: ${seen.length ? seen.join(', ') : 'nothing'}). Use the Sign in button to sign in again.` };
   try { if (token) r = await verify(token, env) } catch (e) { console.error('access check failed', e); r = { why: 'Could not check the sign-in: ' + String(e.message || e).slice(0, 120) } }
   if (!r.who) return json({ error: 'Please sign in again to use the manager view.', why: r.why, signin: true }, 401);
   ctx.data.manager = r.who;
