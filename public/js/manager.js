@@ -1,9 +1,12 @@
 /* Manager view: approve or decline held bookings, see upcoming parties and every email the site sent. */
-import * as R from './rules.js?v=202611151600';
+import * as R from './rules.js?v=202611191438';
 const { SPACES, esc, money, fmtShort, fmtT } = R;
 
 document.getElementById('brand-line').textContent = `Manager view · ${R.BRAND} · ${R.LOCATION}`;
 let D = null, open = null, busy = false, err = null, addOpen = false, editId = null;
+/* Calendar view state */
+let view = (() => { try { return localStorage.getItem('mgrView') === 'cal' ? 'cal' : 'list' } catch { return 'list' } })();
+let calMonth = R.todayLocal().slice(0, 7), cal = null, calErr = null, calSel = null;
 const savedManager = () => { try { return localStorage.getItem('managerName') || '' } catch { return '' } };
 const freshAdd = () => ({ manager: savedManager(), space: 'dr', date: '', block: 'dinner', time: '', ext: false, name: '', phone: '', email: '', guests: '', type: 'Birthday', food: '', org: '', notes: '', emailGuest: false });
 let F = freshAdd();
@@ -17,8 +20,16 @@ async function api(path, body) {
 async function load() {
   try { D = await api('/manager/api/data'); err = null }
   catch (e) { err = e }
+  if (!err && view === 'cal') await fetchCal();
   render();
 }
+async function fetchCal() {
+  try { cal = await api('/manager/api/calendar?month=' + calMonth); calErr = null }
+  catch (e) { calErr = e; if (e.status === 401) err = e }
+}
+async function loadCal() { cal = null; render(); await fetchCal(); render() }
+/* Find a booking wherever it was loaded (lists or calendar). */
+const findB = id => [...(D?.held || []), ...(D?.upcoming || []), ...(D?.declined || []), ...(cal?.bookings || [])].find(x => x.id === +id);
 let toastT;
 function toast(msg) { const t = document.getElementById('toast'); t.innerHTML = `<span>${esc(msg)}</span>`; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 6000) }
 
@@ -67,10 +78,38 @@ const printBtn = b => `<a class="btn ghost small" href="/manager/print.html?id=$
 const when = b => b.space === 'pdr' ? (b.block === 'lunch' ? `Lunch${b.time != null ? ' ' + fmtT(b.time) : ''}${b.ext ? ' (room until 4)' : ''}` : 'Dinner ' + fmtT(b.time)) : fmtT(b.time);
 function card(b) {
   const e = R.estimate(b);
-  return `<div class="req"><div class="row"><b>${esc(b.name)}</b><span class="pill held">On hold</span></div><span class="why">${esc(b.why)}</span>
+  const held = b.status === 'held';
+  return `<div class="req ${held ? '' : 'ok'}"><div class="row"><b>${esc(b.name)}</b><span class="pill ${b.cancelled ? 'declined' : b.status}">${held ? 'On hold' : b.status === 'confirmed' ? 'Confirmed' : b.cancelled ? 'Cancelled' : 'Declined'}</span></div>${held && b.why ? `<span class="why">${esc(b.why)}</span>` : ''}
     <dl class="kv"><dt>When</dt><dd>${esc(R.whenText(b))}</dd><dt>Guests</dt><dd>${b.guests} · ${esc(b.type)}</dd>${b.org ? `<dt>Company</dt><dd>${esc(b.org)}</dd>` : ''}<dt>Food</dt><dd>${e.f ? esc(e.f.name) : '—'}${b.brunchAdd ? ' + coffee/tea/OJ' : ''}</dd>${(+b.platS || +b.platL) ? `<dt>Platters</dt><dd>${+b.platS || 0} small, ${+b.platL || 0} large</dd>` : ''}<dt>Bar</dt><dd>${esc(R.barText(b))}</dd><dt>Checks</dt><dd>${esc(b.checks)}</dd>${b.tv ? '<dt>TV</dt><dd>Yes ($75)</dd>' : ''}${e.priced ? `<dt>Estimate</dt><dd class="mono">${money(e.total)}</dd>` : ''}<dt>Card</dt><dd>${cardCell(b)}</dd><dt>Contact</dt><dd><a href="mailto:${esc(b.email)}">${esc(b.email)}</a><br><a href="tel:${esc(b.phone.replace(/[^\d+]/g, ''))}">${esc(b.phone)}</a></dd><dt>Submitted</dt><dd>${esc(R.fmtStamp(b.createdAt))}</dd>${b.enteredBy ? `<dt>Entered by</dt><dd>${esc(b.enteredBy)}</dd>` : ''}${b.lastChangedBy ? `<dt>Last changed by</dt><dd>${esc(b.lastChangedBy)}</dd>` : ''}</dl>
     ${b.notes ? `<p class="small muted">“${esc(b.notes)}”</p>` : ''}
-    <div class="actions" style="justify-content:flex-end">${printBtn(b)}<button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button><button type="button" class="btn danger small" data-action="decline" data-id="${b.id}" ${busy ? 'disabled' : ''}>Decline</button><button type="button" class="btn primary small" data-action="approve" data-id="${b.id}" ${busy ? 'disabled' : ''}>Approve</button></div></div>`;
+    <div class="actions" style="justify-content:flex-end">${printBtn(b)}<button type="button" class="btn ghost small" data-action="editbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Edit</button>${held ? `<button type="button" class="btn danger small" data-action="decline" data-id="${b.id}" ${busy ? 'disabled' : ''}>Decline</button><button type="button" class="btn primary small" data-action="approve" data-id="${b.id}" ${busy ? 'disabled' : ''}>Approve</button>` : b.status === 'confirmed' ? `<button type="button" class="btn danger small" data-action="cancelbk" data-id="${b.id}" ${busy ? 'disabled' : ''}>Cancel</button>` : ''}</div></div>`;
+}
+const viewTabs = () => `<div class="viewtabs" role="tablist" aria-label="Manager view">${[['list', 'Bookings'], ['cal', 'Calendar']].map(([k, l]) => `<button type="button" role="tab" aria-selected="${view === k}" data-action="view" data-v="${k}">${l}</button>`).join('')}</div>`;
+const SP_SHORT = { pdr: 'PDR', dr: 'Dining', bar: 'Bar' };
+const shortT = m => m == null ? '' : fmtT(m).replace(':00', '').replace(' am', 'a').replace(' pm', 'p');
+function calendarView() {
+  const [y, mo] = calMonth.split('-').map(Number), first = new Date(Date.UTC(y, mo - 1, 1)).getUTCDay(), days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const monthName = new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const list = cal?.month === calMonth ? cal.bookings : null, today = R.todayLocal();
+  const byDay = {}; (list || []).forEach(b => (byDay[b.date] = byDay[b.date] || []).push(b));
+  Object.values(byDay).forEach(a => a.sort((x, z) => (x.time ?? 660) - (z.time ?? 660)));
+  const heldN = (list || []).filter(b => b.status === 'held').length, guestsN = (list || []).reduce((n, b) => n + (+b.guests || 0), 0);
+  let cells = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="mc-dow">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) cells += '<div class="mc-day blank" aria-hidden="true"></div>';
+  for (let d = 1; d <= days; d++) {
+    const ds = `${calMonth}-${R.pad(d)}`, evs = byDay[ds] || [], closed = R.closedName(ds), hol = R.holidayName(ds);
+    cells += `<div class="mc-day ${evs.length ? '' : 'empty'} ${ds === today ? 'today' : ''} ${ds < today ? 'past' : ''}"><div class="mc-num"><span>${d}</span><span class="mc-wd">${R.fmtShort(ds).split(',')[0]}</span>${closed ? `<span class="mc-tag closed">${esc(closed.replace('Closed · ', 'Closed: '))}</span>` : hol ? `<span class="mc-tag">${esc(hol)}</span>` : ''}</div>
+      ${evs.map(b => `<button type="button" class="mc-ev sp-${b.space} ${b.status} ${calSel === b.id ? 'sel' : ''}" data-action="calpick" data-id="${b.id}" title="${esc(R.whenText(b))} · ${esc(b.name)} · ${b.guests} guests${b.status === 'held' ? ' · on hold' : ''}"><span class="t">${shortT(b.time)}</span> ${SP_SHORT[b.space]} · ${esc(b.name)} <span class="g">(${b.guests})</span>${b.status === 'held' ? ' <span class="h">hold</span>' : ''}</button>`).join('')}</div>`;
+  }
+  const selB = calSel != null ? findB(calSel) : null;
+  return `<div class="calwrap">
+    <div class="card"><div class="mc-head"><div><h2>${monthName}</h2><p class="muted small">${list ? `${list.length} part${list.length === 1 ? 'y' : 'ies'} · ${guestsN} guests${heldN ? ` · <b>${heldN} on hold</b>` : ''}` : calErr ? esc(calErr.message) : 'Loading…'}</p></div>
+      <div class="mc-nav"><button type="button" class="btn ghost small" data-action="calnav" data-dir="-1" aria-label="Previous month">←</button><button type="button" class="btn ghost small" data-action="calnav" data-dir="0">Today</button><button type="button" class="btn ghost small" data-action="calnav" data-dir="1" aria-label="Next month">→</button></div></div>
+      <div class="mc-legend"><span class="sp-pdr">Private Dining Room</span><span class="sp-dr">Dining Room</span><span class="sp-bar">Bar</span><span class="held-key">On hold (dashed)</span></div>
+      <div class="mcal ${list ? '' : 'loading'}">${cells}</div>
+      ${list && !list.length ? '<p class="empty" style="margin-top:10px">No parties booked this month.</p>' : ''}</div>
+    ${selB ? `<div class="mc-detail" id="mc-detail"><div class="actions" style="margin-bottom:8px"><h3>${esc(R.fmtLong(selB.date))}</h3><button type="button" class="btn ghost small" data-action="calclose">Close</button></div>${card(selB)}</div>` : '<p class="muted small" style="margin-top:4px">Click a party to see its details, print it, or change it.</p>'}
+  </div>`;
 }
 function render() {
   const app = document.getElementById('app');
@@ -81,8 +120,9 @@ function render() {
   }
   if (!D) return;
   document.getElementById('who').textContent = D.me ? `Signed in as ${D.me}` : '';
+  if (view === 'cal') { app.innerHTML = viewTabs() + `${addOpen ? `<div class="cal-add">${addForm()}</div>` : ''}` + calendarView(); return }
   const s = D.settings;
-  app.innerHTML = `<div class="mgr"><div class="col">
+  app.innerHTML = viewTabs() + `<div class="mgr"><div class="col">
     ${D.emailReady ? '' : '<div class="banner"><b>Email is not set up yet.</b> Bookings are saved, but no emails go out until the Resend step is finished. Each one is listed under “Emails” as not sent.</div>'}
     ${addForm()}
     <div class="panel-head"><span class="eyebrow">Manager view</span><h2>Needs your approval</h2><p class="muted">Held bookings keep the space until you decide. Approving or declining emails the guest.</p></div>
@@ -106,9 +146,13 @@ document.addEventListener('click', async e => {
   if (a === 'signin') { e.preventDefault(); fetch('/cdn-cgi/access/logout', { credentials: 'include', cache: 'no-store' }).catch(() => { }).finally(() => { location.href = '/manager/?t=' + Date.now() }); return }
   // Sign out: clear the sign-in, then go to the guest site instead of Cloudflare's bare sign-out page.
   if (a === 'signout') { e.preventDefault(); fetch('/cdn-cgi/access/logout', { credentials: 'include', cache: 'no-store' }).catch(() => { }).finally(() => { location.href = '/' }); return }
+  if (a === 'view') { view = t.dataset.v; try { localStorage.setItem('mgrView', view) } catch { } if (view === 'cal') return loadCal(); render(); return }
+  if (a === 'calnav') { const d = +t.dataset.dir; if (d === 0) calMonth = R.todayLocal().slice(0, 7); else { const [y, m] = calMonth.split('-').map(Number), k = y * 12 + (m - 1) + d; calMonth = `${Math.floor(k / 12)}-${R.pad(k % 12 + 1)}` } calSel = null; return loadCal() }
+  if (a === 'calpick') { calSel = +t.dataset.id; render(); document.getElementById('mc-detail')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return }
+  if (a === 'calclose') { calSel = null; render(); return }
   if (a === 'mail') { const id = +t.dataset.id; open = open === id ? null : id; render(); return }
   if (a === 'approve' || a === 'decline') {
-    const b = D.held.find(x => x.id === +t.dataset.id);
+    const b = findB(t.dataset.id); if (!b) return;
     if (!confirm(`${a === 'approve' ? 'Approve' : 'Decline'} ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe guest will be emailed.`)) return;
     busy = true; render();
     try { const r = await api('/manager/api/decide', { id: b.id, decision: a }); toast(`${a === 'approve' ? 'Approved' : 'Declined'}. Guest email: ${r.guestEmail}.${a === 'decline' && b.card && !b.card.removed ? (r.cardRemoveFailed ? ' The card could NOT be removed from Square — remove it there by hand.' : ' Card removed from Square.') : ''}`) }
@@ -118,7 +162,7 @@ document.addEventListener('click', async e => {
   if (a === 'addopen') { addOpen = true; editId = null; F = freshAdd(); render(); return }
   if (a === 'addcancel') { addOpen = false; editId = null; F = freshAdd(); render(); return }
   if (a === 'editbk') {
-    const b = [...D.held, ...D.upcoming].find(x => x.id === +t.dataset.id); if (!b) return;
+    const b = findB(t.dataset.id); if (!b) return;
     F = { space: b.space, date: b.date, block: b.block || 'dinner', time: b.time == null ? '' : String(b.time), ext: !!b.ext, name: b.name, phone: b.phone || '', email: b.email || '', guests: String(b.guests), type: b.type || 'Other', food: b.food || '', org: b.org || '', notes: b.notes || '', emailGuest: false, manager: savedManager() };
     editId = b.id; addOpen = true; render();
     document.getElementById('add-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
@@ -138,14 +182,14 @@ document.addEventListener('click', async e => {
     busy = false; return load();
   }
   if (a === 'cancelbk') {
-    const b = D.upcoming.find(x => x.id === +t.dataset.id);
+    const b = findB(t.dataset.id); if (!b) return;
     if (!confirm(`Cancel ${b.name}, ${SPACES[b.space].name} on ${fmtShort(b.date)}?\n\nThe time opens up again on the guest calendar. The guest is NOT emailed, so let them know yourself.${b.card && !b.card.removed ? '\n\nTheir card stays in Square in case you charge a cancellation fee. Use “Remove card” when you are done.' : ''}`)) return;
     busy = true; render();
     try { await api('/manager/api/cancel', { id: b.id }); toast(`Cancelled ${b.name}.`) } catch (x) { toast(x.message) }
     busy = false; return load();
   }
   if (a === 'rmcard') {
-    const b = [...D.held, ...D.upcoming, ...D.declined].find(x => x.id === +t.dataset.id); if (!b) return;
+    const b = findB(t.dataset.id); if (!b) return;
     if (!confirm(`Remove ${b.name}'s ${b.card.brand} ending ${b.card.last4} from Square?\n\nIt can't be charged after this. Do this after the event, or after charging any cancellation fee.`)) return;
     busy = true; render();
     try { await api('/manager/api/card', { id: b.id }); toast(`Card removed from Square for ${b.name}.`) } catch (x) { toast(x.message) }
