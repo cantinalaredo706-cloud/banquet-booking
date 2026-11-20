@@ -1,5 +1,5 @@
 /* Manager view: approve or decline held bookings, see upcoming parties and every email the site sent. */
-import * as R from './rules.js?v=202611191438';
+import * as R from './rules.js?v=202611201731';
 const { SPACES, esc, money, fmtShort, fmtT } = R;
 
 document.getElementById('brand-line').textContent = `Manager view · ${R.BRAND} · ${R.LOCATION}`;

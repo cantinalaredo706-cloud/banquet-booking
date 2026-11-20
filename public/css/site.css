@@ -340,3 +340,5 @@ input[type=date]{font:inherit;color:var(--ink);background:var(--surface);border:
   .mc-wd{display:inline;color:var(--muted);font-weight:600}
   .mc-ev{white-space:normal;font-size:.85rem;padding:6px 8px}
 }
+.food-more{display:flex;flex-direction:column;gap:12px}
+.food-collapsed{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:.92rem;margin:0}

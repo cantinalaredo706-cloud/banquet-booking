@@ -1,5 +1,5 @@
 /* Guest booking page: spaces → date, time & guests → menus → party details → agreement → submit. */
-import * as R from './rules.js?v=202611191438';
+import * as R from './rules.js?v=202611201731';
 const { SPACES, BUFFETS, BAROPTS, LUNCH_SET, DINNER_SET, money, money0, esc, fmtLong, fmtShort, fmtT, pad } = R;
 
 document.getElementById('brand-line').textContent = `${R.BRAND} · ${R.LOCATION}`;
@@ -125,6 +125,8 @@ function stepMenus() {
   return `<div class="panel-head"><span class="eyebrow">Step 3</span><h2>Menus</h2><p class="muted">${esc(R.whenText(Object.assign({ space: S.space }, S.sel)))} · ${g} guests. Choose one food option and how you'd like to handle the bar.</p></div><div id="form-errors"></div>
   <div class="card"><fieldset class="full menus"><legend>Food <span class="hint muted" style="font-weight:400">· parties of more than 25 choose a set menu or buffet</span></legend>
     ${radio('menu', 'Order from our menu at the event', '<span class="small muted" id="menuNote">25 guests or fewer. No estimate.</span>', R.menuBlocked(f.guests))}
+    <p class="food-collapsed" id="foodLess" ${f.food === 'menu' && !S.showMenus ? '' : 'hidden'}>Your group will order from our menu at the event, so you can skip the set menus and buffets. <button type="button" class="linkbtn" data-action="showmenus">See set menus and buffets instead</button></p>
+    <div class="food-more" id="foodMore" ${f.food === 'menu' && !S.showMenus ? 'hidden' : ''}>
     <p class="drinks-note"><b>Set menu, buffet and appetizer prices are for food only.</b> They do not include drinks, non-alcoholic or alcoholic. The Brunch Buffet includes one complimentary Bloody Mary or Mimosa per guest 21+.</p>
     ${lunchOK ? `<div><span class="eyebrow">Lunch set menus · per guest</span></div><div class="grid">${LUNCH_SET.map(p => menuCard('l', p, R.LUNCH_MENUS[p])).join('')}</div>` : ''}
     <div><span class="eyebrow">Dinner set menus · per guest</span></div>
@@ -132,6 +134,7 @@ function stepMenus() {
     <div><span class="eyebrow">Buffets & appetizers · 12 guest minimum · one check</span>${S.space === 'pdr' ? ' <span class="small muted">· a buffet in the Private Dining Room allows up to 32 guests</span>' : ''}</div>
     <div class="choices">${BUFFETS.map(b => radio(b.id, b.name, `<span class="mono">${money(b.price)}</span>/guest${b.brunch ? ' · includes one Bloody Mary or Mimosa (21+)' : ' · food only'}<br><span class="small muted">${esc(b.desc)}</span>${b.brunch && !brunchOK ? '<br><span class="small">Sat & Sun, 10 am–3 pm only</span>' : ''}`, b.brunch && !brunchOK)).join('')}</div>
     <label class="check" id="brunchAddRow" ${f.food === 'brunch' ? '' : 'hidden'}><input type="checkbox" id="f-brunchAdd" data-fc="brunchAdd" ${f.brunchAdd ? 'checked' : ''}><span>Add coffee, tea and orange juice ($2 per guest)</span></label>
+    </div>
     <div class="inline"><span class="small"><b>Appetizer platters</b> (optional) · chef's choice · food only</span><label class="small">Small, feeds 12–15 ($75) <input type="number" min="0" max="10" id="f-platS" data-f="platS" value="${esc(f.platS)}"></label><label class="small">Large, feeds 18–21 ($95) <input type="number" min="0" max="10" id="f-platL" data-f="platL" value="${esc(f.platL)}"></label></div>
   </fieldset></div>
   <div class="card"><fieldset class="full"><legend>Bar</legend>
@@ -173,6 +176,9 @@ function syncDetailsUI() {
   const f = S.form, fi = R.foodInfo(f.food);
   document.querySelectorAll('.sub[data-for]').forEach(el => el.hidden = el.dataset.for !== f.bar);
   const br = document.getElementById('brunchAddRow'); if (br) br.hidden = f.food !== 'brunch';
+  // Ordering from the menu: fold away the set menus and buffets so the bar choice and Continue come right up.
+  const fold = f.food === 'menu' && !S.showMenus, more = document.getElementById('foodMore'), less = document.getElementById('foodLess');
+  if (more) more.hidden = fold; if (less) less.hidden = !fold;
   const mr = document.getElementById('fd-menu');
   if (mr) {
     const blocked = R.menuBlocked(f.guests);
@@ -258,6 +264,7 @@ document.addEventListener('click', e => {
   if (a === 'lstart') { S.sel.block = 'lunch'; S.sel.time = +t.dataset.m; const x = document.getElementById('ext'); S.sel.ext = !!(x && x.checked); resetProgress(); render(); return }
   if (a === 'dstart') { S.sel.block = 'dinner'; S.sel.time = +t.dataset.m; S.sel.ext = false; resetProgress(); render(); return }
   if (a === 'atime') { S.sel.time = +t.dataset.m; resetProgress(); render(); return }
+  if (a === 'showmenus') { S.showMenus = true; syncDetailsUI(); return }
   if (a === 'next') return next();
   if (a === 'submit') return submit();
   if (a === 'restart') { S.step = 1; clearSel(); S.form = R.freshForm(); S.agree = false; S.sig = ''; resetProgress(); S.done = null; render(); window.scrollTo({ top: 0 }); return }
@@ -270,7 +277,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'ext') { if (S.sel.block === 'lunch') S.sel.ext = el.checked; updateSummary(); return }
-  if (el.dataset.f) { S.form[el.dataset.f] = el.value; syncDetailsUI(); updateSummary(); const fe = document.getElementById('form-errors'); if (fe && ['food', 'bar'].includes(el.dataset.f)) fe.innerHTML = '' }
+  if (el.dataset.f) { S.form[el.dataset.f] = el.value; if (el.dataset.f === 'food' && el.value === 'menu') S.showMenus = false; syncDetailsUI(); updateSummary(); const fe = document.getElementById('form-errors'); if (fe && ['food', 'bar'].includes(el.dataset.f)) fe.innerHTML = '' }
   if (el.dataset.fc) { S.form[el.dataset.fc] = el.checked; updateSummary() }
   if (el.dataset.f2 === 'agree') S.agree = el.checked;
 });
